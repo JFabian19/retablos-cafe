@@ -7,14 +7,14 @@ import { DEFAULT_MENU_DATA } from './data/menuData';
 // ==========================================
 // 📋 CONFIGURACIÓN DE LA PLANTILLA DEL MENÚ
 // ==========================================
-const RESTAURANTE_NAME = "Snack Tutti Frutti";
-const RESTAURANTE_SLOGAN = "Snack y Juguería Tropical";
-const WHATSAPP_NUMBER = "51942661467"; // Reemplaza con tu número de WhatsApp con código de país
+const RESTAURANTE_NAME = "Retablo's cafe";
+const RESTAURANTE_SLOGAN = "El hogar del café";
+const WHATSAPP_NUMBER = ""; // Reemplaza con tu número de WhatsApp con código de país (ej: 51 para Perú)
 const FACEBOOK_URL = "";
-const MAPS_URL = "https://www.google.com/maps/search/?api=1&query=Puesto+E16+-+Interior+Mercado+2+-+Tarapoto";
-const LOGO_FOOTER_PATH = "/logo_tutti_frutti.png"; // Reemplaza con la ruta de tu logo en public/
-const BANNER_PATH = "/tropical_banner.png"; // Reemplaza con la ruta de tu banner en public/
-const MARQUEE_TEXT = "🍓 JUGOS FRESCOS Y NATURALES • 🌴 SABOR TROPICAL DESDE TARAPOTO • ¡PRUEBA NUESTROS ANTOJITOS DE LA SELVA! 🍍🍹 • ";
+const MAPS_URL = "https://maps.app.goo.gl/6BTrTRa9B8A1o4GC9";
+const LOGO_FOOTER_PATH = "/logo.png"; // Reemplaza con la ruta de tu logo en public/ (ej: /logo.png)
+const BANNER_PATH = "/banner.png"; // Reemplaza con la ruta de tu banner en public/ (ej: /banner.png)
+const MARQUEE_TEXT = "☕ EL HOGAR DEL CAFÉ • PASIÓN EN CADA TAZA • CAFÉ DE ESPECIALIDAD PERUANO 🥐 ";
 // ==========================================
 
 // Mapa de imágenes locales por defecto para platos conocidos (vacío por defecto para la plantilla)
@@ -245,10 +245,9 @@ export default function App() {
 
   return (
     <div className="max-w-md mx-auto bg-white min-h-screen relative shadow-2xl overflow-hidden flex flex-col font-sans">
-      <header className="sticky top-0 bg-white/95 backdrop-blur-md z-50 px-5 py-4 flex justify-between items-center border-b border-gray-100">
-        <div className="flex flex-col items-start">
-          <h1 className="font-title text-[28px] text-primary leading-none tracking-wide">{RESTAURANTE_NAME}</h1>
-          <span className="font-slogan text-[11px] text-secondary font-bold tracking-wider mt-0.5">{RESTAURANTE_SLOGAN}</span>
+      <header className="sticky top-0 bg-white/95 backdrop-blur-md z-50 px-5 py-3 flex justify-between items-center border-b border-gray-100">
+        <div className="flex items-center">
+          <img src="/logo.png" alt={RESTAURANTE_NAME} className="h-14 w-auto object-contain" />
         </div>
         <div className="flex items-center gap-2">
           {FACEBOOK_URL && (
@@ -309,15 +308,20 @@ export default function App() {
         >
           <div className="absolute inset-0 shimmer opacity-30 mix-blend-overlay"></div>
           <Gift size={18} className="animate-bounce shrink-0" />
-          <span>¡Ponle sabor y color a tu cumpleaños! 🍓 <span className="text-yellow-100 font-black underline">Regístrate aquí</span> y llévate un batido Tutti Frutti de cortesía para celebrar de forma tropical. 🥤🎁</span>
+          <span>¡Celebra tu día en el hogar del café y recibe un dulce regalo cortesía de la casa! 🍰☕ <span className="text-yellow-100 font-black underline">Regístrate aquí</span></span>
         </motion.button>
       </div>
 
       <div className="px-5 pt-4 pb-3">
-        <div className="relative w-full rounded-3xl overflow-hidden shadow-xl aspect-[2/1] bg-gradient-to-br from-primary/10 to-secondary/15 flex flex-col items-center justify-center text-center p-4 border border-dashed border-primary/20">
-          <p className="font-dish font-bold text-primary text-sm uppercase tracking-wider">
-            aca va a imagen
-          </p>
+        <div className="relative w-full rounded-3xl overflow-hidden shadow-xl aspect-[2/1] border border-gray-100 bg-gray-50 flex items-center justify-center">
+          {BANNER_PATH ? (
+            <img src={BANNER_PATH} alt={RESTAURANTE_NAME} className="w-full h-full object-cover" />
+          ) : (
+            <div className="w-full h-full bg-gradient-to-br from-secondary/15 via-primary/5 to-white flex flex-col items-center justify-center text-center p-6">
+              <img src="/logo.png" alt={RESTAURANTE_NAME} className="h-20 w-auto object-contain z-10 animate-fade-in" />
+              <p className="font-title text-primary text-xs tracking-widest uppercase mt-3 z-10 font-bold opacity-80">{RESTAURANTE_SLOGAN}</p>
+            </div>
+          )}
         </div>
       </div>
 
@@ -359,9 +363,13 @@ export default function App() {
                   className="bg-white rounded-[2rem] overflow-hidden flex flex-col shadow-sm border border-gray-100 hover:border-primary/30 hover:shadow-md transition-all duration-200"
                 >
                   <div className="bg-primary/5 aspect-square flex items-center justify-center relative overflow-hidden p-4 border-b border-gray-100">
-                    <span className="font-dish font-bold text-[11px] text-primary uppercase tracking-wider text-center">
-                      aca va a imagen
-                    </span>
+                    {dish.imagen ? (
+                      <img src={dish.imagen} alt={dish.nombre} className="w-full h-full object-cover absolute inset-0" />
+                    ) : (
+                      <span className="font-dish font-bold text-[11px] text-primary uppercase tracking-wider text-center">
+                        aca va a imagen
+                      </span>
+                    )}
                   </div>
                   
                   <div className="p-4 flex flex-col flex-1">
@@ -406,11 +414,9 @@ export default function App() {
           </motion.button>
         </section>
 
-        <footer className="mt-8 pt-8 pb-10 border-t border-gray-200 flex flex-col items-center justify-center">
-          <p className="font-title text-2xl text-primary mb-4">{RESTAURANTE_NAME}</p>
-          <div className="w-32 h-32 mb-6 rounded-2xl border border-dashed border-primary/30 bg-primary/5 flex items-center justify-center text-center p-2">
-            <span className="font-dish font-bold text-[10px] text-primary uppercase tracking-wide">aca va a imagen</span>
-          </div>
+        <footer className="mt-8 pt-8 pb-10 border-t border-gray-200 flex flex-col items-center justify-center text-center">
+          <img src="/logo.png" alt={RESTAURANTE_NAME} className="h-16 w-auto object-contain mb-4" />
+          <p className="font-slogan text-xs text-secondary font-bold tracking-wider uppercase mb-2">{RESTAURANTE_SLOGAN}</p>
           <p className="text-[11px] text-gray-400 font-medium">© 2026 Todos los derechos reservados.</p>
         </footer>
 
