@@ -9,9 +9,36 @@ import { DEFAULT_MENU_DATA } from './data/menuData';
 // ==========================================
 const RESTAURANTE_NAME = "Retablo's cafe";
 const RESTAURANTE_SLOGAN = "El hogar del café";
-const WHATSAPP_NUMBER = "51995814354"; // Reemplaza con tu número de WhatsApp con código de país (ej: 51 para Perú)
+
+// CONFIGURACIÓN DE LAS SEDES
+interface Sucursal {
+  id: string;
+  nombre: string;
+  direccion: string;
+  telefonoFijo?: string;
+  whatsapp: string;
+  mapsUrl?: string;
+}
+
+const SEDES: Sucursal[] = [
+  {
+    id: "tacna",
+    nombre: "Sede Jirón Tacna",
+    direccion: "Jr. Tacna 885, Magdalena del Mar",
+    telefonoFijo: "(01) 263 2386",
+    whatsapp: "51993109737",
+    mapsUrl: "https://maps.app.goo.gl/29NAHxRUxNXKeHgt9"
+  },
+  {
+    id: "28_de_julio",
+    nombre: "Sede 28 de Julio",
+    direccion: "Jr. 28 de julio 608, Magdalena del Mar",
+    whatsapp: "51944253190"
+  }
+];
+
 const FACEBOOK_URL = "";
-const MAPS_URL = "https://maps.app.goo.gl/6BTrTRa9B8A1o4GC9";
+const MAPS_URL = "https://maps.app.goo.gl/29NAHxRUxNXKeHgt9";
 const LOGO_FOOTER_PATH = "/logo.png"; // Reemplaza con la ruta de tu logo en public/ (ej: /logo.png)
 const BANNER_PATH = "/banner.png"; // Reemplaza con la ruta de tu banner en public/ (ej: /banner.png)
 const MARQUEE_TEXT = "☕ EL HOGAR DEL CAFÉ • PASIÓN EN CADA TAZA • CAFÉ DE ESPECIALIDAD PERUANO 🥐 ";
@@ -39,6 +66,9 @@ interface CartItem {
   nombre: string;
   precio: string;
   cantidad: number;
+  temperatura?: string;
+  azucar?: string;
+  saborAlitas?: string;
 }
 
 export default function App() {
@@ -48,6 +78,14 @@ export default function App() {
   const [showSummary, setShowSummary] = useState(false);
   const [activeCategory, setActiveCategory] = useState<string | null>(null);
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
+
+  // Customization States
+  const [customizingDish, setCustomizingDish] = useState<Dish | null>(null);
+  const [customOptions, setCustomOptions] = useState({
+    temperatura: 'Helada',
+    azucar: 'Normal',
+    saborAlitas: 'Barbecue'
+  });
 
   // States for Birthday Form
   const [showBirthdayForm, setShowBirthdayForm] = useState(false);
@@ -78,6 +116,7 @@ export default function App() {
   const [checkoutData, setCheckoutData] = useState({
     nombre: '',
     metodoEntrega: 'delivery', // 'delivery' | 'retiro'
+    sede: 'tacna', // 'tacna' | '28_de_julio'
     direccion: '',
     coordenadasUrl: '',
     horaRecojo: '',
@@ -142,24 +181,81 @@ export default function App() {
   const cartCount = useMemo(() => cart.reduce((acc, item) => acc + item.cantidad, 0), [cart]);
 
   const addToCart = (dish: Dish) => {
+    const isJuice = categories.some(cat => 
+      (cat.id === "jugos" || cat.nombre.toLowerCase().includes("jugos")) &&
+      cat.items.some(item => item.nombre === dish.nombre)
+    );
+    const isWings = dish.nombre.toLowerCase().includes("alitas");
+
+    if (isJuice) {
+      setCustomizingDish(dish);
+      setCustomOptions({
+        temperatura: 'Helada',
+        azucar: 'Normal',
+        saborAlitas: ''
+      });
+      return;
+    }
+
+    if (isWings) {
+      setCustomizingDish(dish);
+      setCustomOptions({
+        temperatura: '',
+        azucar: '',
+        saborAlitas: 'Barbecue'
+      });
+      return;
+    }
+
+    addCustomizedToCart(dish, {});
+  };
+
+  const addCustomizedToCart = (dish: Dish, options: { temperatura?: string; azucar?: string; saborAlitas?: string }) => {
     setCart(prev => {
-      const existing = prev.find(i => i.nombre === dish.nombre && i.precio === dish.precio);
+      const existing = prev.find(i => 
+        i.nombre === dish.nombre && 
+        i.precio === dish.precio &&
+        i.temperatura === options.temperatura &&
+        i.azucar === options.azucar &&
+        i.saborAlitas === options.saborAlitas
+      );
       if (existing) {
         return prev.map(i =>
-          (i.nombre === dish.nombre && i.precio === dish.precio)
+          (i.nombre === dish.nombre && 
+           i.precio === dish.precio &&
+           i.temperatura === options.temperatura &&
+           i.azucar === options.azucar &&
+           i.saborAlitas === options.saborAlitas)
             ? { ...i, cantidad: i.cantidad + 1 }
             : i
         );
       }
-      return [...prev, { nombre: dish.nombre, precio: dish.precio, cantidad: 1 }];
+      return [...prev, { 
+        nombre: dish.nombre, 
+        precio: dish.precio, 
+        cantidad: 1,
+        temperatura: options.temperatura || undefined,
+        azucar: options.azucar || undefined,
+        saborAlitas: options.saborAlitas || undefined
+      }];
     });
   };
 
-  const updateQuantity = (nombre: string, precio: string, delta: number) => {
+  const updateQuantity = (
+    nombre: string, 
+    precio: string, 
+    delta: number, 
+    options?: { temperatura?: string; azucar?: string; saborAlitas?: string }
+  ) => {
     setCart(prev =>
       prev
         .map(i => {
-          if (i.nombre === nombre && i.precio === precio) {
+          const matchesOptions = !options || (
+            i.temperatura === options.temperatura &&
+            i.azucar === options.azucar &&
+            i.saborAlitas === options.saborAlitas
+          );
+          if (i.nombre === nombre && i.precio === precio && matchesOptions) {
             const newQty = i.cantidad + delta;
             return newQty > 0 ? { ...i, cantidad: newQty } : null;
           }
@@ -181,10 +277,17 @@ export default function App() {
     const total = calculateTotal();
     let message = `*Hola ${RESTAURANTE_NAME}, deseo realizar un pedido:*\n\n`;
     cart.forEach(item => {
-      message += `• ${item.cantidad} x ${item.nombre} (${item.precio})\n`;
+      let opts = [];
+      if (item.temperatura) opts.push(`Temp: ${item.temperatura}`);
+      if (item.azucar) opts.push(`Azúcar: ${item.azucar}`);
+      if (item.saborAlitas) opts.push(`Sabor: ${item.saborAlitas}`);
+      
+      const optString = opts.length > 0 ? ` [${opts.join(', ')}]` : '';
+      message += `• ${item.cantidad} x ${item.nombre}${optString} (${item.precio})\n`;
     });
     message += `\n*TOTAL: S/.${total.toFixed(2)}*`;
-    const url = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(message)}`;
+    const primaryWhatsApp = SEDES[0].whatsapp;
+    const url = `https://wa.me/${primaryWhatsApp}?text=${encodeURIComponent(message)}`;
     window.open(url, '_blank');
   };
 
@@ -267,9 +370,13 @@ export default function App() {
     e.preventDefault();
     const total = calculateTotal();
     
+    const branch = SEDES.find(s => s.id === checkoutData.sede) || SEDES[0];
+    const targetWhatsApp = branch.whatsapp;
+
     let message = `*Hola ${RESTAURANTE_NAME}, deseo realizar un pedido:*\n\n`;
     message += `👤 *Cliente:* ${checkoutData.nombre}\n`;
-    message += `📍 *Método de entrega:* ${checkoutData.metodoEntrega === 'delivery' ? 'Envío a domicilio' : 'Retiro en tienda'}\n`;
+    message += `📍 *Sede:* ${branch.nombre}\n`;
+    message += `🚚 *Método de entrega:* ${checkoutData.metodoEntrega === 'delivery' ? 'Envío a domicilio' : 'Retiro en tienda'}\n`;
     
     if (checkoutData.metodoEntrega === 'delivery') {
       message += `🏠 *Dirección:* ${checkoutData.direccion}\n`;
@@ -289,11 +396,17 @@ export default function App() {
     
     message += `*📋 Detalle del Pedido:*\n`;
     cart.forEach(item => {
-      message += `• ${item.cantidad} x ${item.nombre} (${item.precio})\n`;
+      let opts = [];
+      if (item.temperatura) opts.push(`Temp: ${item.temperatura}`);
+      if (item.azucar) opts.push(`Azúcar: ${item.azucar}`);
+      if (item.saborAlitas) opts.push(`Sabor: ${item.saborAlitas}`);
+      
+      const optString = opts.length > 0 ? ` [${opts.join(', ')}]` : '';
+      message += `• ${item.cantidad} x ${item.nombre}${optString} (${item.precio})\n`;
     });
     message += `\n*TOTAL: S/.${total.toFixed(2)}*`;
     
-    const url = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(message)}`;
+    const url = `https://wa.me/${targetWhatsApp}?text=${encodeURIComponent(message)}`;
     window.open(url, '_blank');
     
     setShowCheckoutForm(false);
@@ -454,6 +567,54 @@ export default function App() {
               <p className="font-title text-[#6F4E37] text-xs tracking-widest uppercase mt-3 z-10 font-bold opacity-80">{RESTAURANTE_SLOGAN}</p>
             </div>
           )}
+        </div>
+      </div>
+
+      {/* 📍 Nuestras Sedes Section */}
+      <div className="px-5 py-2 relative z-10">
+        <div className="bg-white/30 backdrop-blur-md rounded-[2.2rem] p-5 border border-white/40 shadow-lg">
+          <h3 className="font-title text-[#6F4E37] text-lg font-bold mb-3 flex items-center gap-1.5 justify-center uppercase tracking-wider">
+            📍 Nuestras Ubicaciones
+          </h3>
+          <div className="space-y-4">
+            {SEDES.map(sede => (
+              <div key={sede.id} className="bg-white/40 backdrop-blur-sm rounded-2xl p-4 border border-white/50 shadow-sm flex flex-col justify-between items-start">
+                <div className="w-full flex justify-between items-start">
+                  <div className="space-y-1 pr-2">
+                    <p className="font-dish font-bold text-dark text-sm leading-snug">{sede.nombre}</p>
+                    <p className="text-xs text-gray-500 leading-snug font-medium">{sede.direccion}</p>
+                  </div>
+                  {sede.mapsUrl && (
+                    <motion.a
+                      href={sede.mapsUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      whileTap={{ scale: 0.9 }}
+                      className="w-8 h-8 bg-gradient-to-br from-[#6F4E37] to-[#D4A373] text-white rounded-xl flex items-center justify-center shadow-md shrink-0 cursor-pointer"
+                      title="Ver en Google Maps"
+                    >
+                      <Navigation size={15} />
+                    </motion.a>
+                  )}
+                </div>
+                <div className="flex flex-wrap gap-x-4 gap-y-1.5 mt-3 pt-2.5 border-t border-white/20 w-full text-[11px] text-[#6F4E37] font-semibold">
+                  {sede.telefonoFijo && (
+                    <span className="flex items-center gap-1 font-medium text-gray-500">
+                      📞 Tel. Fijo: <span className="font-bold text-dark">{sede.telefonoFijo}</span>
+                    </span>
+                  )}
+                  <a
+                    href={`https://wa.me/${sede.whatsapp}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-1 hover:text-green-600 transition-colors font-medium text-gray-500"
+                  >
+                    💬 WhatsApp: <span className="font-bold text-[#6F4E37] underline">{sede.whatsapp.replace(/^51/, '')}</span>
+                  </a>
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
       </div>
 
@@ -624,24 +785,31 @@ export default function App() {
               <div className="space-y-3 mb-8">
                 {cart.map(item => (
                   <div
-                    key={`${item.nombre}-${item.precio}`}
+                    key={`${item.nombre}-${item.precio}-${item.temperatura || ''}-${item.azucar || ''}-${item.saborAlitas || ''}`}
                     className="flex items-center gap-4 bg-gray-50 p-4 rounded-2xl"
                   >
                     <div className="flex-1 min-w-0">
                       <h4 className="font-dish font-semibold text-dark text-sm truncate">{item.nombre}</h4>
-                      <p className="font-dish text-xs text-primary font-bold">{item.precio}</p>
+                      {(item.temperatura || item.azucar || item.saborAlitas) && (
+                        <div className="text-[10px] text-[#6F4E37] font-semibold space-y-0.5 mt-0.5">
+                          {item.temperatura && <div>🌡️ {item.temperatura}</div>}
+                          {item.azucar && <div>🍬 {item.azucar}</div>}
+                          {item.saborAlitas && <div>🍗 Sabor: {item.saborAlitas}</div>}
+                        </div>
+                      )}
+                      <p className="font-dish text-xs text-primary font-bold mt-1">{item.precio}</p>
                     </div>
                     <div className="flex items-center gap-3 bg-white px-3 py-1.5 rounded-xl border border-gray-100">
-                      <button onClick={() => updateQuantity(item.nombre, item.precio, -1)} className="text-gray-400 cursor-pointer">
+                      <button onClick={() => updateQuantity(item.nombre, item.precio, -1, { temperatura: item.temperatura, azucar: item.azucar, saborAlitas: item.saborAlitas })} className="text-gray-400 cursor-pointer">
                         <Minus size={16} />
                       </button>
                       <span className="font-dish font-bold text-sm w-4 text-center">{item.cantidad}</span>
-                      <button onClick={() => updateQuantity(item.nombre, item.precio, 1)} className="text-primary cursor-pointer">
+                      <button onClick={() => updateQuantity(item.nombre, item.precio, 1, { temperatura: item.temperatura, azucar: item.azucar, saborAlitas: item.saborAlitas })} className="text-primary cursor-pointer">
                         <Plus size={16} />
                       </button>
                     </div>
                     <button
-                      onClick={() => updateQuantity(item.nombre, item.precio, -item.cantidad)}
+                      onClick={() => updateQuantity(item.nombre, item.precio, -item.cantidad, { temperatura: item.temperatura, azucar: item.azucar, saborAlitas: item.saborAlitas })}
                       className="text-red-300 ml-1 cursor-pointer hover:text-red-400 transition-colors"
                     >
                       <Trash2 size={18} />
@@ -928,6 +1096,36 @@ export default function App() {
                   </div>
                 </div>
 
+                <div>
+                  <label className="text-[11px] font-bold text-[#6F4E37] uppercase ml-1 mb-1 block">
+                    {checkoutData.metodoEntrega === 'delivery' ? 'Sede de despacho' : 'Sede de recojo'}
+                  </label>
+                  <div className="grid grid-cols-2 gap-2 bg-white/30 backdrop-blur-sm p-1 rounded-xl border border-white/40">
+                    <button
+                      type="button"
+                      onClick={() => setCheckoutData({...checkoutData, sede: 'tacna'})}
+                      className={`py-2 text-[10px] font-bold rounded-lg transition-all cursor-pointer ${
+                        checkoutData.sede === 'tacna'
+                          ? 'bg-[#6F4E37] text-white shadow-sm'
+                          : 'text-[#2C1E16] hover:bg-white/20'
+                      }`}
+                    >
+                      Magdalena (Tacna)
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setCheckoutData({...checkoutData, sede: '28_de_julio'})}
+                      className={`py-2 text-[10px] font-bold rounded-lg transition-all cursor-pointer ${
+                        checkoutData.sede === '28_de_julio'
+                          ? 'bg-[#6F4E37] text-white shadow-sm'
+                          : 'text-[#2C1E16] hover:bg-white/20'
+                      }`}
+                    >
+                      28 de Julio
+                    </button>
+                  </div>
+                </div>
+
                 {checkoutData.metodoEntrega === 'delivery' ? (
                   <div className="space-y-3">
                     <div>
@@ -1060,6 +1258,132 @@ export default function App() {
                   Enviar Pedido a WhatsApp
                 </button>
               </form>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      <AnimatePresence>
+        {customizingDish && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[80] bg-black/45 backdrop-blur-md flex items-center justify-center p-4"
+          >
+            <motion.div
+              initial={{ scale: 0.9, y: 20 }}
+              animate={{ scale: 1, y: 0 }}
+              exit={{ scale: 0.9, y: 20 }}
+              className="liquid-glass w-full max-w-sm rounded-[2.5rem] p-7 border border-white/50 shadow-2xl relative max-h-[90vh] overflow-y-auto"
+            >
+              <button
+                onClick={() => setCustomizingDish(null)}
+                className="absolute top-4 right-4 w-8 h-8 bg-white/40 border border-white/50 backdrop-blur-md rounded-full flex items-center justify-center cursor-pointer"
+              >
+                <X size={16} className="text-[#6F4E37]" />
+              </button>
+
+              <div className="flex flex-col items-center text-center mb-6 mt-2">
+                <div className="w-12 h-12 bg-amber-500/10 border border-amber-500/20 backdrop-blur-sm rounded-full flex items-center justify-center mb-3">
+                  <Utensils size={24} className="text-secondary" />
+                </div>
+                <h2 className="font-title text-2xl text-dark leading-none mb-1">Personalizar</h2>
+                <p className="text-sm font-bold text-[#6F4E37]">{customizingDish.nombre}</p>
+                <p className="text-xs text-gray-500 mt-1">{customizingDish.precio}</p>
+              </div>
+
+              <div className="space-y-5">
+                {/* Temperature Customization (Only for juices) */}
+                {customOptions.temperatura !== '' && (
+                  <div>
+                    <label className="text-[11px] font-bold text-[#6F4E37] uppercase ml-1 mb-2 block">Temperatura</label>
+                    <div className="grid grid-cols-2 gap-2 bg-white/30 backdrop-blur-sm p-1 rounded-xl border border-white/40">
+                      {['Helada', 'Al tiempo'].map(temp => (
+                        <button
+                          key={temp}
+                          type="button"
+                          onClick={() => setCustomOptions(prev => ({ ...prev, temperatura: temp }))}
+                          className={`py-2.5 text-xs font-bold rounded-lg transition-all cursor-pointer ${
+                            customOptions.temperatura === temp
+                              ? 'bg-[#6F4E37] text-white shadow-sm'
+                              : 'text-[#2C1E16] hover:bg-white/20'
+                          }`}
+                        >
+                          {temp}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Sugar Customization (Only for juices) */}
+                {customOptions.azucar !== '' && (
+                  <div>
+                    <label className="text-[11px] font-bold text-[#6F4E37] uppercase ml-1 mb-2 block">Nivel de Azúcar</label>
+                    <div className="grid grid-cols-3 gap-1 bg-white/30 backdrop-blur-sm p-1 rounded-xl border border-white/40">
+                      {['Sin azúcar', 'Bajo en azúcar', 'Normal'].map(sug => (
+                        <button
+                          key={sug}
+                          type="button"
+                          onClick={() => setCustomOptions(prev => ({ ...prev, azucar: sug }))}
+                          className={`py-2 text-[10px] font-black rounded-lg transition-all cursor-pointer ${
+                            customOptions.azucar === sug
+                              ? 'bg-[#6F4E37] text-white shadow-sm'
+                              : 'text-[#2C1E16] hover:bg-white/20'
+                          }`}
+                        >
+                          {sug}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Flavor Customization (Only for Wings) */}
+                {customOptions.saborAlitas !== '' && (
+                  <div>
+                    <label className="text-[11px] font-bold text-[#6F4E37] uppercase ml-1 mb-2 block">Elige el Sabor</label>
+                    <div className="grid grid-cols-2 gap-2 bg-white/30 backdrop-blur-sm p-1 rounded-xl border border-white/40">
+                      {[
+                        { id: 'Barbecue', label: 'Barbecue' },
+                        { id: 'Salsa de maracuyá', label: 'Salsa Maracuyá' },
+                        { id: 'Salsa de maracumango', label: 'Maracumango' },
+                        { id: 'Salsa de búfalo', label: 'Salsa Búfalo' }
+                      ].map(sabor => (
+                        <button
+                          key={sabor.id}
+                          type="button"
+                          onClick={() => setCustomOptions(prev => ({ ...prev, saborAlitas: sabor.id }))}
+                          className={`py-2.5 text-[10.5px] font-bold rounded-lg transition-all cursor-pointer ${
+                            customOptions.saborAlitas === sabor.id
+                              ? 'bg-[#6F4E37] text-white shadow-sm'
+                              : 'text-[#2C1E16] hover:bg-white/20'
+                          }`}
+                        >
+                          {sabor.label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    addCustomizedToCart(customizingDish, {
+                      temperatura: customOptions.temperatura || undefined,
+                      azucar: customOptions.azucar || undefined,
+                      saborAlitas: customOptions.saborAlitas || undefined
+                    });
+                    setCustomizingDish(null);
+                  }}
+                  className="w-full bg-[#6F4E37] text-white py-3.5 rounded-xl font-bold text-sm shadow-md shadow-[#6F4E37]/20 mt-4 hover:opacity-95 transition-all flex items-center justify-center gap-2 cursor-pointer"
+                >
+                  <Plus size={18} strokeWidth={2.5} />
+                  Agregar al Pedido
+                </button>
+              </div>
             </motion.div>
           </motion.div>
         )}

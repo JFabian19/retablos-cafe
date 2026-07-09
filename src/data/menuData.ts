@@ -477,6 +477,12 @@ export const DEFAULT_MENU_DATA: Category[] = [
         descripcion: "Un filete de pollo grillado dentro de un pan Ciabatta con semillas de ajonjolí, salsa honey, tomate y palta.",
         precio: "S/. 15.00",
         imagen: ""
+      },
+      {
+        nombre: "Alitas",
+        descripcion: "Crujientes alitas bañadas en tu salsa favorita (BBQ, maracuyá, maracumango o búfalo).",
+        precio: "S/. 22.00",
+        imagen: ""
       }
     ]
   },
