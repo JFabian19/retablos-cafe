@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useEffect } from 'react';
-import { ShoppingBag, Plus, Minus, ChevronRight, X, Trash2, Utensils, Facebook, MapPin, Loader2, Gift, Star } from 'lucide-react';
+import { ShoppingBag, Plus, Minus, ChevronRight, X, Trash2, Utensils, Facebook, MapPin, Loader2, Gift, Star, Copy, Check, Navigation } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { fetchSheetData, submitSheetData, SheetDish, SheetCategory, SHEET_ID } from './services/googleSheets';
 import { DEFAULT_MENU_DATA } from './data/menuData';
@@ -9,7 +9,7 @@ import { DEFAULT_MENU_DATA } from './data/menuData';
 // ==========================================
 const RESTAURANTE_NAME = "Retablo's cafe";
 const RESTAURANTE_SLOGAN = "El hogar del café";
-const WHATSAPP_NUMBER = ""; // Reemplaza con tu número de WhatsApp con código de país (ej: 51 para Perú)
+const WHATSAPP_NUMBER = "51995814354"; // Reemplaza con tu número de WhatsApp con código de país (ej: 51 para Perú)
 const FACEBOOK_URL = "";
 const MAPS_URL = "https://maps.app.goo.gl/6BTrTRa9B8A1o4GC9";
 const LOGO_FOOTER_PATH = "/logo.png"; // Reemplaza con la ruta de tu logo en public/ (ej: /logo.png)
@@ -69,6 +69,19 @@ export default function App() {
     estrellasMozo: 0,
     estrellasComida: 0,
     comentario: ''
+  });
+
+  // States for Checkout Form
+  const [showCheckoutForm, setShowCheckoutForm] = useState(false);
+  const [gettingLocation, setGettingLocation] = useState(false);
+  const [copiedYape, setCopiedYape] = useState(false);
+  const [checkoutData, setCheckoutData] = useState({
+    nombre: '',
+    metodoEntrega: 'delivery', // 'delivery' | 'retiro'
+    direccion: '',
+    coordenadasUrl: '',
+    horaRecojo: '',
+    metodoPago: 'efectivo' // 'efectivo' | 'tarjeta' | 'yape_plin'
   });
 
   useEffect(() => {
@@ -175,6 +188,118 @@ export default function App() {
     window.open(url, '_blank');
   };
 
+  const getAvailableTimes = () => {
+    const times: { label: string; value: string }[] = [];
+    const now = new Date();
+    
+    const generateForDate = (date: Date, isToday: boolean) => {
+      const slots: { label: string; value: string }[] = [];
+      const currentHour = date.getHours();
+      const currentMinute = date.getMinutes();
+      
+      for (let hour = 8; hour <= 23; hour++) {
+        for (let minute of [0, 30]) {
+          if (hour === 23 && minute === 30) continue;
+          
+          if (!isToday || hour > currentHour || (hour === currentHour && minute > currentMinute + 15)) {
+            const hh = hour.toString().padStart(2, '0');
+            const mm = minute.toString().padStart(2, '0');
+            const timeStr = `${hh}:${mm}`;
+            slots.push({
+              label: `${isToday ? 'Hoy' : 'Mañana'} a las ${timeStr}`,
+              value: `${isToday ? 'Hoy' : 'Mañana'} - ${timeStr}`
+            });
+          }
+        }
+      }
+      return slots;
+    };
+
+    const todaySlots = generateForDate(now, true);
+    times.push(...todaySlots);
+    
+    const tomorrow = new Date();
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    const tomorrowSlots = generateForDate(tomorrow, false);
+    times.push(...tomorrowSlots.slice(0, 12));
+
+    return times;
+  };
+
+  const handleGetLocation = () => {
+    if (!navigator.geolocation) {
+      alert("La geolocalización no está soportada por tu navegador.");
+      return;
+    }
+    
+    setGettingLocation(true);
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        const { latitude, longitude } = position.coords;
+        const mapsUrl = `https://www.google.com/maps?q=${latitude},${longitude}`;
+        setCheckoutData(prev => ({ ...prev, coordenadasUrl: mapsUrl }));
+        setGettingLocation(false);
+      },
+      (error) => {
+        console.error(error);
+        setGettingLocation(false);
+        let errorMsg = "No pudimos obtener tu ubicación.";
+        if (error.code === 1) {
+          errorMsg = "Por favor, concede permisos de ubicación en tu navegador para obtener tu posición.";
+        } else if (error.code === 2) {
+          errorMsg = "Ubicación no disponible. Asegúrate de activar el GPS en tu dispositivo.";
+        } else if (error.code === 3) {
+          errorMsg = "La solicitud de ubicación expiró.";
+        }
+        alert(errorMsg);
+      },
+      { enableHighAccuracy: true, timeout: 10000 }
+    );
+  };
+
+  const copyYapeNumber = () => {
+    navigator.clipboard.writeText("995814354");
+    setCopiedYape(true);
+    setTimeout(() => setCopiedYape(false), 2000);
+  };
+
+  const handleCheckoutSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    const total = calculateTotal();
+    
+    let message = `*Hola ${RESTAURANTE_NAME}, deseo realizar un pedido:*\n\n`;
+    message += `👤 *Cliente:* ${checkoutData.nombre}\n`;
+    message += `📍 *Método de entrega:* ${checkoutData.metodoEntrega === 'delivery' ? 'Envío a domicilio' : 'Retiro en tienda'}\n`;
+    
+    if (checkoutData.metodoEntrega === 'delivery') {
+      message += `🏠 *Dirección:* ${checkoutData.direccion}\n`;
+      if (checkoutData.coordenadasUrl) {
+        message += `🗺️ *Ubicación GPS:* ${checkoutData.coordenadasUrl}\n`;
+      }
+    } else {
+      message += `⏰ *Hora estimada de recojo:* ${checkoutData.horaRecojo}\n`;
+    }
+    
+    const paymentLabels: Record<string, string> = {
+      efectivo: 'Efectivo',
+      tarjeta: 'Tarjeta de Crédito/Débito',
+      yape_plin: 'Yape / Plin (Titular: Luis Hostos)'
+    };
+    message += `💳 *Método de pago:* ${paymentLabels[checkoutData.metodoPago] || checkoutData.metodoPago}\n\n`;
+    
+    message += `*📋 Detalle del Pedido:*\n`;
+    cart.forEach(item => {
+      message += `• ${item.cantidad} x ${item.nombre} (${item.precio})\n`;
+    });
+    message += `\n*TOTAL: S/.${total.toFixed(2)}*`;
+    
+    const url = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(message)}`;
+    window.open(url, '_blank');
+    
+    setShowCheckoutForm(false);
+    setCart([]);
+  };
+
   const scrollToCategory = (catId: string) => {
     setActiveCategory(catId);
     const el = document.getElementById(`cat-${catId}`);
@@ -244,8 +369,15 @@ export default function App() {
   }
 
   return (
-    <div className="max-w-md mx-auto bg-white min-h-screen relative shadow-2xl overflow-hidden flex flex-col font-sans">
-      <header className="sticky top-0 bg-white/95 backdrop-blur-md z-50 px-5 py-3 flex justify-between items-center border-b border-gray-100">
+    <div className="max-w-md mx-auto bg-gradient-to-b from-[#FAF8F5] via-[#f7f2ea] to-[#FAF8F5] min-h-screen relative shadow-2xl overflow-hidden flex flex-col font-sans">
+      {/* Liquid Glass Background Blobs */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none z-0">
+        <div className="absolute top-[10%] -left-[20%] w-[250px] h-[250px] rounded-full bg-gradient-to-br from-[#6F4E37]/25 to-[#D4A373]/20 blur-[60px] animate-blob-1" />
+        <div className="absolute top-[45%] -right-[20%] w-[280px] h-[280px] rounded-full bg-gradient-to-br from-[#D4A373]/30 to-[#f59e0b]/20 blur-[70px] animate-blob-2" />
+        <div className="absolute bottom-[15%] -left-[10%] w-[240px] h-[240px] rounded-full bg-gradient-to-br from-[#6F4E37]/20 to-[#D4A373]/30 blur-[65px] animate-blob-3" />
+      </div>
+
+      <header className="sticky top-0 bg-white/45 backdrop-blur-xl z-50 px-5 py-3 flex justify-between items-center border-b border-white/40 relative">
         <div className="flex items-center">
           <img src="/logo.png" alt={RESTAURANTE_NAME} className="h-14 w-auto object-contain" />
         </div>
@@ -256,7 +388,7 @@ export default function App() {
               target="_blank"
               rel="noopener noreferrer"
               whileTap={{ scale: 0.95 }}
-              className="w-11 h-11 bg-primary/10 rounded-full flex items-center justify-center text-primary cursor-pointer"
+              className="w-11 h-11 bg-white/40 border border-white/50 backdrop-blur-md rounded-full flex items-center justify-center text-[#6F4E37] shadow-sm hover:bg-white/60 transition-all cursor-pointer"
             >
               <Facebook size={22} />
             </motion.a>
@@ -267,7 +399,7 @@ export default function App() {
               target="_blank"
               rel="noopener noreferrer"
               whileTap={{ scale: 0.95 }}
-              className="w-11 h-11 bg-primary/10 rounded-full flex items-center justify-center text-primary cursor-pointer"
+              className="w-11 h-11 bg-white/40 border border-white/50 backdrop-blur-md rounded-full flex items-center justify-center text-[#6F4E37] shadow-sm hover:bg-white/60 transition-all cursor-pointer"
             >
               <MapPin size={22} />
             </motion.a>
@@ -275,11 +407,11 @@ export default function App() {
           <motion.div
             onClick={() => cartCount > 0 && setShowSummary(true)}
             whileTap={{ scale: 0.95 }}
-            className="w-11 h-11 bg-primary/10 rounded-full flex items-center justify-center relative cursor-pointer"
+            className="w-11 h-11 bg-white/40 border border-white/50 backdrop-blur-md rounded-full flex items-center justify-center relative cursor-pointer text-[#6F4E37] shadow-sm hover:bg-white/60 transition-all"
           >
-            <ShoppingBag size={22} className="text-primary" />
+            <ShoppingBag size={22} className="text-[#6F4E37]" />
             {cartCount > 0 && (
-              <span className="absolute -top-0.5 -right-0.5 min-w-[20px] h-5 bg-secondary text-white rounded-full text-[10px] font-bold flex items-center justify-center px-1">
+              <span className="absolute -top-1 -right-1 min-w-[20px] h-5 bg-[#6F4E37] text-white rounded-full text-[10px] font-bold flex items-center justify-center px-1 shadow-[0_0_10px_rgba(111,78,55,0.3)]">
                 {cartCount}
               </span>
             )}
@@ -287,24 +419,24 @@ export default function App() {
         </div>
       </header>
 
-      <div className="w-full bg-primary py-2 overflow-hidden flex items-center">
-        <div className="animate-marquee flex gap-6 text-white font-slogan font-bold text-[11px] tracking-widest uppercase whitespace-nowrap">
+      <div className="w-[calc(100%-2.5rem)] mx-auto mt-3 bg-[#6F4E37]/80 backdrop-blur-md py-2.5 px-4 rounded-full overflow-hidden flex items-center border border-white/20 shadow-md relative z-10">
+        <div className="animate-marquee flex gap-6 text-white font-slogan font-bold text-[10px] tracking-widest uppercase whitespace-nowrap">
           {[...Array(10)].map((_, i) => (
             <span key={i}>{MARQUEE_TEXT}</span>
           ))}
         </div>
       </div>
 
-      <div className="px-5 pt-4">
+      <div className="px-5 pt-4 relative z-10">
         <motion.button 
           whileHover={{ scale: 1.02 }}
           whileTap={{ scale: 0.95 }}
           animate={{ 
-            boxShadow: ["0px 0px 0px 0px rgba(245,158,11,0.6)", "0px 0px 20px 8px rgba(245,158,11,0)", "0px 0px 0px 0px rgba(245,158,11,0)"] 
+            boxShadow: ["0px 0px 0px 0px rgba(212,163,115,0.6)", "0px 0px 20px 8px rgba(212,163,115,0)", "0px 0px 0px 0px rgba(212,163,115,0)"] 
           }}
           transition={{ repeat: Infinity, duration: 1.5 }}
           onClick={() => setShowBirthdayForm(true)}
-          className="w-full bg-gradient-to-r from-yellow-500 via-secondary to-amber-500 text-white py-3 px-4 rounded-2xl flex items-center justify-center gap-2 font-bold text-[10px] sm:text-[11px] uppercase tracking-wide border border-yellow-400 relative overflow-hidden group text-center"
+          className="w-full bg-gradient-to-r from-[#D4A373]/80 via-amber-500/80 to-[#D4A373]/80 backdrop-blur-md text-white py-3 px-4 rounded-[1.8rem] flex items-center justify-center gap-2 font-bold text-[10px] sm:text-[11px] uppercase tracking-wide border border-white/40 relative overflow-hidden group text-center"
         >
           <div className="absolute inset-0 shimmer opacity-30 mix-blend-overlay"></div>
           <Gift size={18} className="animate-bounce shrink-0" />
@@ -312,29 +444,29 @@ export default function App() {
         </motion.button>
       </div>
 
-      <div className="px-5 pt-4 pb-3">
-        <div className="relative w-full rounded-3xl overflow-hidden shadow-xl aspect-[2/1] border border-gray-100 bg-gray-50 flex items-center justify-center">
+      <div className="px-5 pt-4 pb-3 relative z-10">
+        <div className="relative w-full rounded-[2.2rem] overflow-hidden shadow-lg aspect-[2/1] border border-white/50 bg-white/20 backdrop-blur-md flex items-center justify-center">
           {BANNER_PATH ? (
             <img src={BANNER_PATH} alt={RESTAURANTE_NAME} className="w-full h-full object-cover" />
           ) : (
-            <div className="w-full h-full bg-gradient-to-br from-secondary/15 via-primary/5 to-white flex flex-col items-center justify-center text-center p-6">
+            <div className="w-full h-full bg-gradient-to-br from-[#D4A373]/20 via-[#6F4E37]/10 to-white/40 flex flex-col items-center justify-center text-center p-6">
               <img src="/logo.png" alt={RESTAURANTE_NAME} className="h-20 w-auto object-contain z-10 animate-fade-in" />
-              <p className="font-title text-primary text-xs tracking-widest uppercase mt-3 z-10 font-bold opacity-80">{RESTAURANTE_SLOGAN}</p>
+              <p className="font-title text-[#6F4E37] text-xs tracking-widest uppercase mt-3 z-10 font-bold opacity-80">{RESTAURANTE_SLOGAN}</p>
             </div>
           )}
         </div>
       </div>
 
-      <div className="px-5 py-3 overflow-x-auto no-scrollbar">
+      <div className="px-5 py-3 overflow-x-auto no-scrollbar relative z-10">
         <div className="flex gap-2 w-max">
           {categories.map(cat => (
             <button
               key={cat.id}
               onClick={() => scrollToCategory(cat.id)}
-              className={`px-4 py-2 rounded-full text-[11px] font-category font-semibold whitespace-nowrap transition-all duration-200 border
+              className={`px-4.5 py-2.5 rounded-full text-[11px] font-category font-semibold whitespace-nowrap transition-all duration-300 border backdrop-blur-md
                 ${activeCategory === cat.id
-                  ? 'bg-primary text-white border-primary shadow-md shadow-primary/20'
-                  : 'bg-white text-dark border-gray-200 hover:border-primary/40 hover:text-primary'
+                  ? 'bg-gradient-to-r from-[#6F4E37] to-[#D4A373] text-white border-white/20 shadow-md shadow-[#6F4E37]/20'
+                  : 'bg-white/40 text-[#2C1E16] border-white/50 hover:border-[#6F4E37]/40 hover:text-[#6F4E37]'
                 }`}
             >
               {cat.nombre}
@@ -343,7 +475,7 @@ export default function App() {
         </div>
       </div>
 
-      <main className="flex-1 overflow-y-auto pb-32 px-5">
+      <main className="flex-1 overflow-y-auto pb-32 px-5 relative z-10">
         {categories.map(cat => (
           <section key={cat.id} id={`cat-${cat.id}`} className="mb-10 scroll-mt-28">
             <div className="mb-5 pt-2">
@@ -359,15 +491,15 @@ export default function App() {
               {cat.items.map((dish, idx) => (
                 <motion.div
                   key={idx}
-                  whileHover={{ y: -4 }}
-                  className="bg-white rounded-[2rem] overflow-hidden flex flex-col shadow-sm border border-gray-100 hover:border-primary/30 hover:shadow-md transition-all duration-200"
+                  whileHover={{ y: -6, scale: 1.02 }}
+                  className="liquid-glass rounded-[2rem] overflow-hidden flex flex-col border border-white/50 shadow-md hover:shadow-lg hover:border-white/80 transition-all duration-300 relative z-10"
                 >
-                  <div className="bg-primary/5 aspect-square flex items-center justify-center relative overflow-hidden p-4 border-b border-gray-100">
+                  <div className="bg-primary/5 aspect-square flex items-center justify-center relative overflow-hidden p-2.5 border-b border-white/30">
                     {dish.imagen ? (
-                      <img src={dish.imagen} alt={dish.nombre} className="w-full h-full object-cover absolute inset-0" />
+                      <img src={dish.imagen} alt={dish.nombre} className="w-full h-full object-cover absolute inset-0 transition-transform duration-500 hover:scale-110" />
                     ) : (
-                      <span className="font-dish font-bold text-[11px] text-primary uppercase tracking-wider text-center">
-                        aca va a imagen
+                      <span className="font-dish font-bold text-[10px] text-primary uppercase tracking-wider text-center px-2">
+                        Retablo's Cafe
                       </span>
                     )}
                   </div>
@@ -389,7 +521,7 @@ export default function App() {
                       <motion.button
                         whileTap={{ scale: 0.8 }}
                         onClick={() => addToCart(dish)}
-                        className="w-8 h-8 bg-primary/10 rounded-full flex items-center justify-center text-primary transition-colors duration-200 shrink-0"
+                        className="w-8 h-8 bg-white/60 border border-white/60 backdrop-blur-md rounded-full flex items-center justify-center text-primary hover:bg-[#6F4E37] hover:text-white transition-all shadow-sm shrink-0 cursor-pointer"
                       >
                         <Plus size={16} strokeWidth={3} />
                       </motion.button>
@@ -401,27 +533,27 @@ export default function App() {
           </section>
         ))}
 
-        <section className="mt-8 mb-4 border border-gray-100 bg-gray-50 rounded-3xl p-5 text-center shadow-sm">
+        <section className="mt-8 mb-4 border border-white/50 liquid-glass rounded-[2.2rem] p-6 text-center shadow-md relative z-10">
           <h3 className="font-title text-primary text-[22px] leading-tight mb-2">¿Cómo estuvo todo?</h3>
           <p className="text-[11px] text-gray-500 mb-4 px-4">Ayúdanos a mejorar calificando tu experiencia con nosotros</p>
           <motion.button 
             whileTap={{ scale: 0.95 }}
             onClick={() => setShowReviewForm(true)}
-            className="bg-primary text-white px-6 py-3 rounded-2xl font-bold text-sm shadow-md shadow-primary/20 flex items-center justify-center gap-2 mx-auto w-full"
+            className="bg-gradient-to-r from-primary to-secondary text-white px-6 py-3.5 rounded-2xl font-bold text-sm shadow-md shadow-primary/20 flex items-center justify-center gap-2 mx-auto w-full cursor-pointer hover:opacity-95 transition-opacity"
           >
             <Star size={18} className="fill-white" />
             Reseña nuestra comida
           </motion.button>
         </section>
 
-        <footer className="mt-8 pt-8 pb-10 border-t border-gray-200 flex flex-col items-center justify-center text-center">
+        <footer className="mt-8 pt-8 pb-10 border-t border-white/30 flex flex-col items-center justify-center text-center relative z-10">
           <img src="/logo.png" alt={RESTAURANTE_NAME} className="h-16 w-auto object-contain mb-4" />
           <p className="font-slogan text-xs text-secondary font-bold tracking-wider uppercase mb-2">{RESTAURANTE_SLOGAN}</p>
           <p className="text-[11px] text-gray-400 font-medium">© 2026 Todos los derechos reservados.</p>
         </footer>
 
-        <div className="bg-dark py-6 flex flex-col items-center justify-center">
-          <p className="text-[10px] font-bold tracking-[0.2em] uppercase mb-1 opacity-50 text-white/50">Digital Menu Experience</p>
+        <div className="bg-transparent py-6 flex flex-col items-center justify-center relative z-10 border-t border-white/20">
+          <p className="text-[9px] font-bold tracking-[0.2em] uppercase mb-1.5 opacity-40 text-dark/60">Digital Menu Experience</p>
           <motion.a 
             href="https://tymasolutions.lat/"
             target="_blank"
@@ -429,8 +561,8 @@ export default function App() {
             className="flex items-center gap-1 font-bold text-sm tracking-tight group cursor-pointer"
             whileTap={{ scale: 0.95 }}
           >
-            <span className="text-white group-hover:text-[#00BFFF] transition-colors duration-200">Hecho por Tyma</span>
-            <span className="text-[#00BFFF] group-hover:text-white transition-colors duration-200">Solutions</span>
+            <span className="text-dark group-hover:text-primary transition-colors duration-200">Hecho por Tyma</span>
+            <span className="text-secondary group-hover:text-primary transition-colors duration-200">Solutions</span>
           </motion.a>
         </div>
       </main>
@@ -443,7 +575,7 @@ export default function App() {
             exit={{ y: 100 }}
             className="fixed bottom-0 w-full max-w-md p-5 z-40"
           >
-            <div className="glass rounded-[2rem] p-4 flex items-center justify-between border border-white/50 shadow-2xl">
+            <div className="liquid-glass rounded-[2.2rem] p-4 flex items-center justify-between border border-white/60 shadow-2xl">
               <div className="flex items-center gap-3">
                 <div className="w-12 h-12 bg-primary rounded-2xl flex items-center justify-center relative overflow-hidden">
                   <div className="shimmer absolute inset-0 opacity-20"></div>
@@ -456,7 +588,7 @@ export default function App() {
               </div>
               <button
                 onClick={() => setShowSummary(true)}
-                className="bg-primary text-white px-6 py-3 rounded-2xl flex items-center gap-2 shadow-lg shadow-primary/30 font-bold text-sm"
+                className="bg-primary text-white px-6 py-3.5 rounded-2xl flex items-center gap-2 shadow-lg shadow-primary/30 font-bold text-sm cursor-pointer hover:opacity-95 transition-opacity"
               >
                 Ver Pedido
                 <ChevronRight size={18} />
@@ -478,13 +610,13 @@ export default function App() {
               initial={{ y: "100%" }}
               animate={{ y: 0 }}
               exit={{ y: "100%" }}
-              className="bg-white w-full max-w-md rounded-t-[3rem] p-6 max-h-[85vh] overflow-y-auto"
+              className="bg-white w-full max-w-md rounded-t-[3rem] p-6 max-h-[85vh] overflow-y-auto relative"
             >
               <div className="flex justify-between items-center mb-6">
                 <h2 className="font-title text-2xl text-primary">Mi Pedido</h2>
                 <button
                   onClick={() => setShowSummary(false)}
-                  className="w-10 h-10 bg-gray-50 rounded-full flex items-center justify-center"
+                  className="w-10 h-10 bg-gray-50 rounded-full flex items-center justify-center cursor-pointer"
                 >
                   <X size={20} className="text-gray-400" />
                 </button>
@@ -500,17 +632,17 @@ export default function App() {
                       <p className="font-dish text-xs text-primary font-bold">{item.precio}</p>
                     </div>
                     <div className="flex items-center gap-3 bg-white px-3 py-1.5 rounded-xl border border-gray-100">
-                      <button onClick={() => updateQuantity(item.nombre, item.precio, -1)} className="text-gray-400">
+                      <button onClick={() => updateQuantity(item.nombre, item.precio, -1)} className="text-gray-400 cursor-pointer">
                         <Minus size={16} />
                       </button>
                       <span className="font-dish font-bold text-sm w-4 text-center">{item.cantidad}</span>
-                      <button onClick={() => updateQuantity(item.nombre, item.precio, 1)} className="text-primary">
+                      <button onClick={() => updateQuantity(item.nombre, item.precio, 1)} className="text-primary cursor-pointer">
                         <Plus size={16} />
                       </button>
                     </div>
                     <button
                       onClick={() => updateQuantity(item.nombre, item.precio, -item.cantidad)}
-                      className="text-red-300 ml-1"
+                      className="text-red-300 ml-1 cursor-pointer hover:text-red-400 transition-colors"
                     >
                       <Trash2 size={18} />
                     </button>
@@ -524,10 +656,13 @@ export default function App() {
                 </div>
               </div>
               <button
-                onClick={sendToWhatsApp}
-                className="w-full bg-[#25D366] text-white py-4 rounded-2xl flex items-center justify-center gap-3 shadow-xl shadow-green-100 hover:scale-[1.02] transition-transform font-bold"
+                onClick={() => {
+                  setShowSummary(false);
+                  setShowCheckoutForm(true);
+                }}
+                className="w-full bg-primary hover:opacity-95 text-white py-4 rounded-2xl flex items-center justify-center gap-3 shadow-lg shadow-primary/20 hover:scale-[1.01] transition-all font-bold cursor-pointer"
               >
-                Enviar Pedido a WhatsApp
+                Continuar con el Pedido
                 <ChevronRight size={20} />
               </button>
             </motion.div>
@@ -572,60 +707,60 @@ export default function App() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[70] bg-black/60 backdrop-blur-sm flex items-center justify-center p-4"
+            className="fixed inset-0 z-[70] bg-black/45 backdrop-blur-md flex items-center justify-center p-4"
           >
             <motion.div
               initial={{ scale: 0.9, y: 20 }}
               animate={{ scale: 1, y: 0 }}
               exit={{ scale: 0.9, y: 20 }}
-              className="bg-white w-full max-w-sm rounded-[2rem] p-6 shadow-2xl relative max-h-[90vh] overflow-y-auto"
+              className="liquid-glass w-full max-w-sm rounded-[2.5rem] p-7 border border-white/50 shadow-2xl relative max-h-[90vh] overflow-y-auto"
             >
               <button
                 onClick={() => setShowBirthdayForm(false)}
-                className="absolute top-4 right-4 w-8 h-8 bg-gray-50 rounded-full flex items-center justify-center"
+                className="absolute top-4 right-4 w-8 h-8 bg-white/40 border border-white/50 backdrop-blur-md rounded-full flex items-center justify-center cursor-pointer"
               >
-                <X size={18} className="text-gray-400" />
+                <X size={16} className="text-[#6F4E37]" />
               </button>
 
               <div className="flex flex-col items-center text-center mb-5 mt-2">
-                <div className="w-12 h-12 bg-amber-50 rounded-full flex items-center justify-center mb-3">
+                <div className="w-12 h-12 bg-amber-500/10 border border-amber-500/20 backdrop-blur-sm rounded-full flex items-center justify-center mb-3">
                   <Gift size={24} className="text-secondary" />
                 </div>
                 <h2 className="font-title text-2xl text-dark leading-none mb-2">¡Tu Cumpleaños!</h2>
-                <p className="text-xs text-gray-500">Déjanos tus datos para enviarte una sorpresa en tu día especial.</p>
+                <p className="text-xs font-semibold text-[#2C1E16]/85">Déjanos tus datos para enviarte una sorpresa en tu día especial.</p>
               </div>
 
               {birthdaySuccess ? (
-                <div className="bg-green-50 text-green-600 p-4 rounded-2xl text-center text-sm font-bold border border-green-100">
+                <div className="bg-green-500/10 border border-green-500/20 backdrop-blur-sm text-green-700 p-4 rounded-2xl text-center text-sm font-bold">
                   ¡Gracias! Tus datos han sido guardados.
                 </div>
               ) : (
                 <form onSubmit={handleBirthdaySubmit} className="space-y-3">
                   <div>
-                    <label className="text-[10px] font-bold text-gray-400 uppercase ml-1">Nombre Completo</label>
-                    <input required type="text" value={birthdayData.nombre} onChange={e => setBirthdayData({...birthdayData, nombre: e.target.value})} className="w-full bg-gray-50 border border-gray-100 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-secondary/50 transition-colors" placeholder="Ej. Juan Pérez" />
+                    <label className="text-[11px] font-bold text-[#6F4E37] uppercase ml-1">Nombre Completo</label>
+                    <input required type="text" value={birthdayData.nombre} onChange={e => setBirthdayData({...birthdayData, nombre: e.target.value})} className="w-full liquid-glass-input rounded-xl px-4 py-2.5 text-sm focus:outline-none transition-all" placeholder="Ej. Juan Pérez" />
                   </div>
                   <div>
-                    <label className="text-[10px] font-bold text-gray-400 uppercase ml-1">Teléfono</label>
+                    <label className="text-[11px] font-bold text-[#6F4E37] uppercase ml-1">Teléfono</label>
                     <input required type="tel" minLength={9} maxLength={11} pattern="[0-9]*" value={birthdayData.telefono} onChange={e => {
                       const val = e.target.value.replace(/\D/g, '');
                       setBirthdayData({...birthdayData, telefono: val});
-                    }} className="w-full bg-gray-50 border border-gray-100 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-secondary/50 transition-colors" placeholder="Ej. 987654321" />
+                    }} className="w-full liquid-glass-input rounded-xl px-4 py-2.5 text-sm focus:outline-none transition-all" placeholder="Ej. 987654321" />
                   </div>
                   <div>
-                    <label className="text-[10px] font-bold text-gray-400 uppercase ml-1">Fecha de Nacimiento</label>
-                    <input required type="date" value={birthdayData.fechaNacimiento} onChange={e => setBirthdayData({...birthdayData, fechaNacimiento: e.target.value})} className="w-full bg-gray-50 border border-gray-100 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-secondary/50 transition-colors text-gray-700" />
+                    <label className="text-[11px] font-bold text-[#6F4E37] uppercase ml-1">Fecha de Nacimiento</label>
+                    <input required type="date" value={birthdayData.fechaNacimiento} onChange={e => setBirthdayData({...birthdayData, fechaNacimiento: e.target.value})} className="w-full liquid-glass-input rounded-xl px-4 py-2.5 text-sm focus:outline-none transition-all text-gray-700" />
                   </div>
                   <div>
-                    <label className="text-[10px] font-bold text-gray-400 uppercase ml-1">Distrito</label>
-                    <input required type="text" value={birthdayData.distrito} onChange={e => setBirthdayData({...birthdayData, distrito: e.target.value})} className="w-full bg-gray-50 border border-gray-100 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-secondary/50 transition-colors" placeholder="Ej. Miraflores" />
+                    <label className="text-[11px] font-bold text-[#6F4E37] uppercase ml-1">Distrito</label>
+                    <input required type="text" value={birthdayData.distrito} onChange={e => setBirthdayData({...birthdayData, distrito: e.target.value})} className="w-full liquid-glass-input rounded-xl px-4 py-2.5 text-sm focus:outline-none transition-all" placeholder="Ej. Miraflores" />
                   </div>
                   <div>
-                    <label className="text-[10px] font-bold text-gray-400 uppercase ml-1">Correo Electrónico (Opcional)</label>
-                    <input type="email" value={birthdayData.correo} onChange={e => setBirthdayData({...birthdayData, correo: e.target.value})} className="w-full bg-gray-50 border border-gray-100 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-secondary/50 transition-colors" placeholder="correo@ejemplo.com" />
+                    <label className="text-[11px] font-bold text-[#6F4E37] uppercase ml-1">Correo Electrónico (Opcional)</label>
+                    <input type="email" value={birthdayData.correo} onChange={e => setBirthdayData({...birthdayData, correo: e.target.value})} className="w-full liquid-glass-input rounded-xl px-4 py-2.5 text-sm focus:outline-none transition-all" placeholder="correo@ejemplo.com" />
                   </div>
                   
-                  <button disabled={isSubmittingBirthday} type="submit" className="w-full bg-secondary text-white py-3 rounded-xl font-bold text-sm shadow-md shadow-secondary/20 mt-2 disabled:opacity-70 flex justify-center items-center">
+                  <button disabled={isSubmittingBirthday} type="submit" className="w-full bg-[#6F4E37] text-white py-3.5 rounded-xl font-bold text-sm shadow-md shadow-[#6F4E37]/20 mt-2 disabled:opacity-70 flex justify-center items-center cursor-pointer">
                     {isSubmittingBirthday ? <Loader2 size={18} className="animate-spin" /> : "Guardar mis datos"}
                   </button>
                 </form>
@@ -641,44 +776,44 @@ export default function App() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[70] bg-black/60 backdrop-blur-sm flex items-center justify-center p-4"
+            className="fixed inset-0 z-[70] bg-black/45 backdrop-blur-md flex items-center justify-center p-4"
           >
             <motion.div
               initial={{ scale: 0.9, y: 20 }}
               animate={{ scale: 1, y: 0 }}
               exit={{ scale: 0.9, y: 20 }}
-              className="bg-white w-full max-w-sm rounded-[2rem] p-6 shadow-2xl relative max-h-[90vh] overflow-y-auto"
+              className="liquid-glass w-full max-w-sm rounded-[2.5rem] p-7 border border-white/50 shadow-2xl relative max-h-[90vh] overflow-y-auto"
             >
               <button
                 onClick={() => setShowReviewForm(false)}
-                className="absolute top-4 right-4 w-8 h-8 bg-gray-50 rounded-full flex items-center justify-center"
+                className="absolute top-4 right-4 w-8 h-8 bg-white/40 border border-white/50 backdrop-blur-md rounded-full flex items-center justify-center cursor-pointer"
               >
-                <X size={18} className="text-gray-400" />
+                <X size={16} className="text-[#6F4E37]" />
               </button>
 
               <div className="flex flex-col items-center text-center mb-5 mt-2">
-                <div className="w-12 h-12 bg-teal-50 rounded-full flex items-center justify-center mb-3">
+                <div className="w-12 h-12 bg-teal-500/10 border border-teal-500/20 backdrop-blur-sm rounded-full flex items-center justify-center mb-3">
                   <Star size={24} className="text-primary fill-primary" />
                 </div>
                 <h2 className="font-title text-2xl text-dark leading-none mb-2">¡Calificanos!</h2>
-                <p className="text-xs text-gray-500">Tu opinión es muy importante para nosotros.</p>
+                <p className="text-xs font-semibold text-[#2C1E16]/85">Tu opinión es muy importante para nosotros.</p>
               </div>
 
               {reviewSuccess ? (
-                <div className="bg-green-50 text-green-600 p-4 rounded-2xl text-center text-sm font-bold border border-green-100">
+                <div className="bg-green-500/10 border border-green-500/20 backdrop-blur-sm text-green-700 p-4 rounded-2xl text-center text-sm font-bold">
                   ¡Gracias por tu reseña! Nos ayuda a mejorar.
                 </div>
               ) : (
                 <form onSubmit={handleReviewSubmit} className="space-y-5">
                   
-                  <div className="bg-gray-50 p-4 rounded-2xl border border-gray-100 flex flex-col items-center">
-                    <p className="text-xs font-bold text-gray-500 mb-2">Atención del Mozo</p>
+                  <div className="bg-white/30 border border-white/30 backdrop-blur-sm p-4 rounded-2xl flex flex-col items-center">
+                    <p className="text-xs font-bold text-[#6F4E37] mb-2">Atención del Mozo</p>
                     <div className="flex gap-1">
                       {[1,2,3,4,5].map(star => (
                         <button 
                           key={star} type="button" 
                           onClick={() => setReviewData({...reviewData, estrellasMozo: star})}
-                          className="p-1 transition-transform hover:scale-110"
+                          className="p-1 transition-transform hover:scale-110 cursor-pointer"
                         >
                           <Star size={28} className={reviewData.estrellasMozo >= star ? "text-yellow-400 fill-yellow-400" : "text-gray-300"} />
                         </button>
@@ -686,14 +821,14 @@ export default function App() {
                     </div>
                   </div>
 
-                  <div className="bg-gray-50 p-4 rounded-2xl border border-gray-100 flex flex-col items-center">
-                    <p className="text-xs font-bold text-gray-500 mb-2">Calidad de la Comida</p>
+                  <div className="bg-white/30 border border-white/30 backdrop-blur-sm p-4 rounded-2xl flex flex-col items-center">
+                    <p className="text-xs font-bold text-[#6F4E37] mb-2">Calidad de la Comida</p>
                     <div className="flex gap-1">
                       {[1,2,3,4,5].map(star => (
                         <button 
                           key={star} type="button" 
                           onClick={() => setReviewData({...reviewData, estrellasComida: star})}
-                          className="p-1 transition-transform hover:scale-110"
+                          className="p-1 transition-transform hover:scale-110 cursor-pointer"
                         >
                           <Star size={28} className={reviewData.estrellasComida >= star ? "text-yellow-400 fill-yellow-400" : "text-gray-300"} />
                         </button>
@@ -702,21 +837,229 @@ export default function App() {
                   </div>
 
                   <div>
-                    <label className="text-[10px] font-bold text-gray-400 uppercase ml-1">Comentario (Opcional)</label>
+                    <label className="text-[11px] font-bold text-[#6F4E37] uppercase ml-1">Comentario (Opcional)</label>
                     <textarea 
                       rows={3} 
                       value={reviewData.comentario} 
                       onChange={e => setReviewData({...reviewData, comentario: e.target.value})} 
-                      className="w-full bg-gray-50 border border-gray-100 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-primary/50 transition-colors resize-none mt-1" 
+                      className="w-full liquid-glass-input rounded-xl px-4 py-3 text-sm focus:outline-none transition-all resize-none mt-1" 
                       placeholder="Cuéntanos más sobre tu experiencia..." 
                     />
                   </div>
                   
-                  <button disabled={isSubmittingReview} type="submit" className="w-full bg-primary text-white py-3 rounded-xl font-bold text-sm shadow-md shadow-primary/20 mt-2 disabled:opacity-70 flex justify-center items-center">
+                  <button disabled={isSubmittingReview} type="submit" className="w-full bg-primary text-white py-3.5 rounded-xl font-bold text-sm shadow-md shadow-primary/20 mt-2 disabled:opacity-70 flex justify-center items-center cursor-pointer">
                     {isSubmittingReview ? <Loader2 size={18} className="animate-spin" /> : "Enviar Reseña"}
                   </button>
                 </form>
               )}
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      <AnimatePresence>
+        {showCheckoutForm && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[70] bg-black/45 backdrop-blur-md flex items-center justify-center p-4"
+          >
+            <motion.div
+              initial={{ scale: 0.9, y: 20 }}
+              animate={{ scale: 1, y: 0 }}
+              exit={{ scale: 0.9, y: 20 }}
+              className="liquid-glass w-full max-w-sm rounded-[2.5rem] p-7 border border-white/50 shadow-2xl relative max-h-[90vh] overflow-y-auto"
+            >
+              <button
+                type="button"
+                onClick={() => setShowCheckoutForm(false)}
+                className="absolute top-4 right-4 w-8 h-8 bg-white/40 border border-white/50 backdrop-blur-md rounded-full flex items-center justify-center cursor-pointer"
+              >
+                <X size={16} className="text-[#6F4E37]" />
+              </button>
+
+              <div className="flex flex-col items-center text-center mb-5 mt-2">
+                <div className="w-12 h-12 bg-amber-500/10 border border-amber-500/20 backdrop-blur-sm rounded-full flex items-center justify-center mb-3">
+                  <ShoppingBag size={24} className="text-secondary" />
+                </div>
+                <h2 className="font-title text-2xl text-dark leading-none mb-1">Finalizar Pedido</h2>
+                <p className="text-xs font-semibold text-[#2C1E16]/85">Completa los detalles de tu entrega y pago.</p>
+              </div>
+
+              <form onSubmit={handleCheckoutSubmit} className="space-y-4">
+                <div>
+                  <label className="text-[11px] font-bold text-[#6F4E37] uppercase ml-1">Tu Nombre</label>
+                  <input
+                    required
+                    type="text"
+                    value={checkoutData.nombre}
+                    onChange={e => setCheckoutData({...checkoutData, nombre: e.target.value})}
+                    className="w-full liquid-glass-input rounded-xl px-4 py-2.5 text-sm focus:outline-none transition-all"
+                    placeholder="Ej. Luis Pérez"
+                  />
+                </div>
+
+                <div>
+                  <label className="text-[11px] font-bold text-[#6F4E37] uppercase ml-1 mb-1 block">Método de Entrega</label>
+                  <div className="grid grid-cols-2 gap-2 bg-white/30 backdrop-blur-sm p-1 rounded-xl border border-white/40">
+                    <button
+                      type="button"
+                      onClick={() => setCheckoutData({...checkoutData, metodoEntrega: 'delivery'})}
+                      className={`py-2 text-xs font-bold rounded-lg transition-all cursor-pointer ${
+                        checkoutData.metodoEntrega === 'delivery'
+                          ? 'bg-[#6F4E37] text-white shadow-sm'
+                          : 'text-[#2C1E16] hover:bg-white/20'
+                      }`}
+                    >
+                      Envío a domicilio
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setCheckoutData({...checkoutData, metodoEntrega: 'retiro'})}
+                      className={`py-2 text-xs font-bold rounded-lg transition-all cursor-pointer ${
+                        checkoutData.metodoEntrega === 'retiro'
+                          ? 'bg-[#6F4E37] text-white shadow-sm'
+                          : 'text-[#2C1E16] hover:bg-white/20'
+                      }`}
+                    >
+                      Retiro en tienda
+                    </button>
+                  </div>
+                </div>
+
+                {checkoutData.metodoEntrega === 'delivery' ? (
+                  <div className="space-y-3">
+                    <div>
+                      <label className="text-[11px] font-bold text-[#6F4E37] uppercase ml-1">Dirección de Envío</label>
+                      <input
+                        required={checkoutData.metodoEntrega === 'delivery'}
+                        type="text"
+                        value={checkoutData.direccion}
+                        onChange={e => setCheckoutData({...checkoutData, direccion: e.target.value})}
+                        className="w-full liquid-glass-input rounded-xl px-4 py-2.5 text-sm focus:outline-none transition-all"
+                        placeholder="Dirección, departamento o referencia"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-[11px] font-bold text-[#6F4E37] uppercase ml-1 mb-1 block">Ubicación GPS (Google Maps)</label>
+                      <div className="flex items-center gap-2">
+                        <button
+                          type="button"
+                          onClick={handleGetLocation}
+                          disabled={gettingLocation}
+                          className="flex-1 bg-white/40 border border-white/50 backdrop-blur-md hover:bg-white/60 text-[#6F4E37] py-2 px-4 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
+                        >
+                          {gettingLocation ? (
+                            <Loader2 size={14} className="animate-spin" />
+                          ) : (
+                            <Navigation size={14} />
+                          )}
+                          {checkoutData.coordenadasUrl ? "Ubicación obtenida" : "Obtener ubicación actual"}
+                        </button>
+                        {checkoutData.coordenadasUrl && (
+                          <div className="w-9 h-9 bg-green-500/10 border border-green-500/20 backdrop-blur-sm rounded-xl flex items-center justify-center text-green-600 shadow-sm">
+                            <Check size={18} />
+                          </div>
+                        )}
+                      </div>
+                      <p className="text-[10px] font-medium text-[#2C1E16]/70 mt-1 ml-1">Permite precisar tu ubicación para el repartidor.</p>
+                    </div>
+                  </div>
+                ) : (
+                  <div>
+                    <label className="text-[11px] font-bold text-[#6F4E37] uppercase ml-1">Hora Estimada de Recojo</label>
+                    <select
+                      required={checkoutData.metodoEntrega === 'retiro'}
+                      value={checkoutData.horaRecojo}
+                      onChange={e => setCheckoutData({...checkoutData, horaRecojo: e.target.value})}
+                      className="w-full liquid-glass-input rounded-xl px-4 py-2.5 text-sm focus:outline-none transition-all cursor-pointer block bg-[#FAF8F5]/90"
+                    >
+                      <option value="">Selecciona una hora</option>
+                      {getAvailableTimes().map(slot => (
+                        <option key={slot.value} value={slot.value}>{slot.label}</option>
+                      ))}
+                    </select>
+                  </div>
+                )}
+
+                <div>
+                  <label className="text-[11px] font-bold text-[#6F4E37] uppercase ml-1 mb-1 block">Método de Pago</label>
+                  <div className="grid grid-cols-3 gap-1 bg-white/30 backdrop-blur-sm p-1 rounded-xl border border-white/40">
+                    <button
+                      type="button"
+                      onClick={() => setCheckoutData({...checkoutData, metodoPago: 'efectivo'})}
+                      className={`py-2 text-[10px] font-black rounded-lg transition-all cursor-pointer ${
+                        checkoutData.metodoPago === 'efectivo'
+                          ? 'bg-[#6F4E37] text-white shadow-sm'
+                          : 'text-[#2C1E16] hover:bg-white/20'
+                      }`}
+                    >
+                      Efectivo
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setCheckoutData({...checkoutData, metodoPago: 'tarjeta'})}
+                      className={`py-2 text-[10px] font-black rounded-lg transition-all cursor-pointer ${
+                        checkoutData.metodoPago === 'tarjeta'
+                          ? 'bg-[#6F4E37] text-white shadow-sm'
+                          : 'text-[#2C1E16] hover:bg-white/20'
+                      }`}
+                    >
+                      Tarjeta
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setCheckoutData({...checkoutData, metodoPago: 'yape_plin'})}
+                      className={`py-2 text-[10px] font-black rounded-lg transition-all cursor-pointer ${
+                        checkoutData.metodoPago === 'yape_plin'
+                          ? 'bg-[#6F4E37] text-white shadow-sm'
+                          : 'text-[#2C1E16] hover:bg-white/20'
+                      }`}
+                    >
+                      Yape / Plin
+                    </button>
+                  </div>
+                </div>
+
+                {checkoutData.metodoPago === 'yape_plin' && (
+                  <div className="bg-[#2C1E16]/90 border border-white/10 backdrop-blur-sm p-4 rounded-2xl text-white shadow-lg space-y-2 animate-fade-in">
+                    <div className="flex justify-between items-center">
+                      <p className="text-[10px] font-bold text-white/50 uppercase tracking-wider">Pago Yape/Plin</p>
+                      <button
+                        type="button"
+                        onClick={copyYapeNumber}
+                        className="text-[10px] bg-white/10 border border-white/20 hover:bg-white/20 px-2.5 py-1.5 rounded-lg flex items-center gap-1 cursor-pointer transition-all"
+                      >
+                        {copiedYape ? (
+                          <>
+                            <Check size={11} className="text-green-400" />
+                            <span>Copiado</span>
+                          </>
+                        ) : (
+                          <>
+                            <Copy size={11} />
+                            <span>Copiar número</span>
+                          </>
+                        )}
+                      </button>
+                    </div>
+                    <div>
+                      <p className="text-[15px] font-bold tracking-wider">995 814 354</p>
+                      <p className="text-xs text-white/70">A nombre de: <span className="font-bold text-white">Luis Hostos</span></p>
+                    </div>
+                    <p className="text-[9px] text-white/40 italic">Por favor realiza el yapeo y copia el número de operación para reportarlo.</p>
+                  </div>
+                )}
+
+                <button
+                  type="submit"
+                  className="w-full bg-[#25D366]/90 border border-white/30 backdrop-blur-sm text-white py-3.5 rounded-xl font-bold text-sm shadow-md shadow-green-500/10 hover:bg-[#25D366] hover:scale-[1.01] transition-all flex items-center justify-center gap-2 cursor-pointer mt-3"
+                >
+                  <ShoppingBag size={18} />
+                  Enviar Pedido a WhatsApp
+                </button>
+              </form>
             </motion.div>
           </motion.div>
         )}
