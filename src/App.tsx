@@ -9,36 +9,9 @@ import { DEFAULT_MENU_DATA } from './data/menuData';
 // ==========================================
 const RESTAURANTE_NAME = "Retablo's cafe";
 const RESTAURANTE_SLOGAN = "El hogar del café";
-
-// CONFIGURACIÓN DE LAS SEDES
-interface Sucursal {
-  id: string;
-  nombre: string;
-  direccion: string;
-  telefonoFijo?: string;
-  whatsapp: string;
-  mapsUrl?: string;
-}
-
-const SEDES: Sucursal[] = [
-  {
-    id: "tacna",
-    nombre: "Sede Jirón Tacna",
-    direccion: "Jr. Tacna 885, Magdalena del Mar",
-    telefonoFijo: "(01) 263 2386",
-    whatsapp: "51993109737",
-    mapsUrl: "https://maps.app.goo.gl/29NAHxRUxNXKeHgt9"
-  },
-  {
-    id: "28_de_julio",
-    nombre: "Sede 28 de Julio",
-    direccion: "Jr. 28 de julio 608, Magdalena del Mar",
-    whatsapp: "51944253190"
-  }
-];
-
+const WHATSAPP_NUMBER = "51995814354"; // Reemplaza con tu número de WhatsApp con código de país (ej: 51 para Perú)
 const FACEBOOK_URL = "";
-const MAPS_URL = "https://maps.app.goo.gl/29NAHxRUxNXKeHgt9";
+const MAPS_URL = "https://maps.app.goo.gl/6BTrTRa9B8A1o4GC9";
 const LOGO_FOOTER_PATH = "/logo.png"; // Reemplaza con la ruta de tu logo en public/ (ej: /logo.png)
 const BANNER_PATH = "/banner.png"; // Reemplaza con la ruta de tu banner en public/ (ej: /banner.png)
 const MARQUEE_TEXT = "☕ EL HOGAR DEL CAFÉ • PASIÓN EN CADA TAZA • CAFÉ DE ESPECIALIDAD PERUANO 🥐 ";
@@ -116,7 +89,6 @@ export default function App() {
   const [checkoutData, setCheckoutData] = useState({
     nombre: '',
     metodoEntrega: 'delivery', // 'delivery' | 'retiro'
-    sede: 'tacna', // 'tacna' | '28_de_julio'
     direccion: '',
     coordenadasUrl: '',
     horaRecojo: '',
@@ -286,8 +258,7 @@ export default function App() {
       message += `• ${item.cantidad} x ${item.nombre}${optString} (${item.precio})\n`;
     });
     message += `\n*TOTAL: S/.${total.toFixed(2)}*`;
-    const primaryWhatsApp = SEDES[0].whatsapp;
-    const url = `https://wa.me/${primaryWhatsApp}?text=${encodeURIComponent(message)}`;
+    const url = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(message)}`;
     window.open(url, '_blank');
   };
 
@@ -370,12 +341,8 @@ export default function App() {
     e.preventDefault();
     const total = calculateTotal();
     
-    const branch = SEDES.find(s => s.id === checkoutData.sede) || SEDES[0];
-    const targetWhatsApp = branch.whatsapp;
-
     let message = `*Hola ${RESTAURANTE_NAME}, deseo realizar un pedido:*\n\n`;
     message += `👤 *Cliente:* ${checkoutData.nombre}\n`;
-    message += `📍 *Sede:* ${branch.nombre}\n`;
     message += `🚚 *Método de entrega:* ${checkoutData.metodoEntrega === 'delivery' ? 'Envío a domicilio' : 'Retiro en tienda'}\n`;
     
     if (checkoutData.metodoEntrega === 'delivery') {
@@ -406,7 +373,7 @@ export default function App() {
     });
     message += `\n*TOTAL: S/.${total.toFixed(2)}*`;
     
-    const url = `https://wa.me/${targetWhatsApp}?text=${encodeURIComponent(message)}`;
+    const url = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(message)}`;
     window.open(url, '_blank');
     
     setShowCheckoutForm(false);
@@ -567,54 +534,6 @@ export default function App() {
               <p className="font-title text-[#6F4E37] text-xs tracking-widest uppercase mt-3 z-10 font-bold opacity-80">{RESTAURANTE_SLOGAN}</p>
             </div>
           )}
-        </div>
-      </div>
-
-      {/* 📍 Nuestras Sedes Section */}
-      <div className="px-5 py-2 relative z-10">
-        <div className="bg-white/30 backdrop-blur-md rounded-[2.2rem] p-5 border border-white/40 shadow-lg">
-          <h3 className="font-title text-[#6F4E37] text-lg font-bold mb-3 flex items-center gap-1.5 justify-center uppercase tracking-wider">
-            📍 Nuestras Ubicaciones
-          </h3>
-          <div className="space-y-4">
-            {SEDES.map(sede => (
-              <div key={sede.id} className="bg-white/40 backdrop-blur-sm rounded-2xl p-4 border border-white/50 shadow-sm flex flex-col justify-between items-start">
-                <div className="w-full flex justify-between items-start">
-                  <div className="space-y-1 pr-2">
-                    <p className="font-dish font-bold text-dark text-sm leading-snug">{sede.nombre}</p>
-                    <p className="text-xs text-gray-500 leading-snug font-medium">{sede.direccion}</p>
-                  </div>
-                  {sede.mapsUrl && (
-                    <motion.a
-                      href={sede.mapsUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      whileTap={{ scale: 0.9 }}
-                      className="w-8 h-8 bg-gradient-to-br from-[#6F4E37] to-[#D4A373] text-white rounded-xl flex items-center justify-center shadow-md shrink-0 cursor-pointer"
-                      title="Ver en Google Maps"
-                    >
-                      <Navigation size={15} />
-                    </motion.a>
-                  )}
-                </div>
-                <div className="flex flex-wrap gap-x-4 gap-y-1.5 mt-3 pt-2.5 border-t border-white/20 w-full text-[11px] text-[#6F4E37] font-semibold">
-                  {sede.telefonoFijo && (
-                    <span className="flex items-center gap-1 font-medium text-gray-500">
-                      📞 Tel. Fijo: <span className="font-bold text-dark">{sede.telefonoFijo}</span>
-                    </span>
-                  )}
-                  <a
-                    href={`https://wa.me/${sede.whatsapp}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex items-center gap-1 hover:text-green-600 transition-colors font-medium text-gray-500"
-                  >
-                    💬 WhatsApp: <span className="font-bold text-[#6F4E37] underline">{sede.whatsapp.replace(/^51/, '')}</span>
-                  </a>
-                </div>
-              </div>
-            ))}
-          </div>
         </div>
       </div>
 
@@ -1092,36 +1011,6 @@ export default function App() {
                       }`}
                     >
                       Retiro en tienda
-                    </button>
-                  </div>
-                </div>
-
-                <div>
-                  <label className="text-[11px] font-bold text-[#6F4E37] uppercase ml-1 mb-1 block">
-                    {checkoutData.metodoEntrega === 'delivery' ? 'Sede de despacho' : 'Sede de recojo'}
-                  </label>
-                  <div className="grid grid-cols-2 gap-2 bg-white/30 backdrop-blur-sm p-1 rounded-xl border border-white/40">
-                    <button
-                      type="button"
-                      onClick={() => setCheckoutData({...checkoutData, sede: 'tacna'})}
-                      className={`py-2 text-[10px] font-bold rounded-lg transition-all cursor-pointer ${
-                        checkoutData.sede === 'tacna'
-                          ? 'bg-[#6F4E37] text-white shadow-sm'
-                          : 'text-[#2C1E16] hover:bg-white/20'
-                      }`}
-                    >
-                      Magdalena (Tacna)
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setCheckoutData({...checkoutData, sede: '28_de_julio'})}
-                      className={`py-2 text-[10px] font-bold rounded-lg transition-all cursor-pointer ${
-                        checkoutData.sede === '28_de_julio'
-                          ? 'bg-[#6F4E37] text-white shadow-sm'
-                          : 'text-[#2C1E16] hover:bg-white/20'
-                      }`}
-                    >
-                      28 de Julio
                     </button>
                   </div>
                 </div>
