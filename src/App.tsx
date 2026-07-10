@@ -638,7 +638,7 @@ export default function App() {
                       {dish.nombre}
                     </h4>
                     {dish.descripcion && (
-                      <p className="text-[10px] text-gray-400 leading-tight mb-2 line-clamp-3">
+                      <p className="text-[10px] text-gray-600 font-medium leading-tight mb-2 line-clamp-3">
                         {dish.descripcion}
                       </p>
                     )}
@@ -664,7 +664,7 @@ export default function App() {
 
         <section className="mt-8 mb-4 border border-white/50 liquid-glass rounded-[2.2rem] p-6 text-center shadow-md relative z-10">
           <h3 className="font-title text-primary text-[22px] leading-tight mb-2">¿Cómo estuvo todo?</h3>
-          <p className="text-[11px] text-gray-500 mb-4 px-4">Ayúdanos a mejorar calificando tu experiencia con nosotros</p>
+          <p className="text-[11px] text-gray-700 font-semibold mb-4 px-4">Ayúdanos a mejorar calificando tu experiencia con nosotros</p>
           <motion.button 
             whileTap={{ scale: 0.95 }}
             onClick={() => setShowReviewForm(true)}
@@ -678,7 +678,7 @@ export default function App() {
         <footer className="mt-8 pt-8 pb-10 border-t border-white/30 flex flex-col items-center justify-center text-center relative z-10">
           <img src="/logo.png" alt={RESTAURANTE_NAME} className="h-16 w-auto object-contain mb-4" />
           <p className="font-slogan text-xs text-secondary font-bold tracking-wider uppercase mb-2">{RESTAURANTE_SLOGAN}</p>
-          <p className="text-[11px] text-gray-400 font-medium">© 2026 Todos los derechos reservados.</p>
+          <p className="text-[11px] text-gray-500 font-medium">© 2026 Todos los derechos reservados.</p>
         </footer>
 
         <div className="bg-transparent py-6 flex flex-col items-center justify-center relative z-10 border-t border-white/20">
@@ -711,7 +711,7 @@ export default function App() {
                   <ShoppingBag size={20} className="text-white" />
                 </div>
                 <div>
-                  <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Tu Pedido</p>
+                  <p className="text-[10px] font-bold text-gray-600 uppercase tracking-widest">Tu Pedido</p>
                   <p className="font-bold text-dark text-lg">{cartCount} Artículos</p>
                 </div>
               </div>
@@ -1229,7 +1229,7 @@ export default function App() {
                 </div>
                 <h2 className="font-title text-2xl text-dark leading-none mb-1">Personalizar</h2>
                 <p className="text-sm font-bold text-[#6F4E37]">{customizingDish.nombre}</p>
-                <p className="text-xs text-gray-500 mt-1">{customizingDish.precio}</p>
+                <p className="text-sm font-bold text-[#6F4E37] mt-1">{customizingDish.precio}</p>
               </div>
 
               <div className="space-y-5">
