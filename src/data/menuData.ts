@@ -20,67 +20,67 @@ export const DEFAULT_MENU_DATA: Category[] = [
         nombre: "Americano",
         descripcion: "240 ml",
         precio: "S/. 8.00",
-        imagen: ""
+        imagen: "/americano.png"
       },
       {
         nombre: "Capuccino",
         descripcion: "150 ml",
         precio: "S/. 10.00",
-        imagen: ""
+        imagen: "/capuccino.png"
       },
       {
         nombre: "C. de Canela",
         descripcion: "150 ml",
         precio: "S/. 10.00",
-        imagen: ""
+        imagen: "/c_de_canela.png"
       },
       {
         nombre: "Espresso",
         descripcion: "Concentrado con ricos aromas cítricos y cuerpo robusto.",
         precio: "S/. 4.00",
-        imagen: ""
+        imagen: "/espresso.png"
       },
       {
         nombre: "Cortado",
         descripcion: "Espresso suavizado con un toque de leche caliente.",
         precio: "S/. 6.50",
-        imagen: ""
+        imagen: "/cortado.png"
       },
       {
         nombre: "Latte",
         descripcion: "Espresso con leche vaporizada y un toque de crema espumosa.",
         precio: "S/. 8.00",
-        imagen: ""
+        imagen: "/latte.png"
       },
       {
         nombre: "Moccaccino",
         descripcion: "Mezcla de espresso, chocolate y leche cremosa.",
         precio: "S/. 10.00",
-        imagen: ""
+        imagen: "/moccaccino.png"
       },
       {
         nombre: "Macciato",
         descripcion: "Espresso con un toque de espuma de leche.",
         precio: "S/. 7.00",
-        imagen: ""
+        imagen: "/macciato.png"
       },
       {
         nombre: "Flat white",
         descripcion: "Café suave y cremoso con espresso y leche vaporizada.",
         precio: "S/. 8.00",
-        imagen: ""
+        imagen: "/flat_white.png"
       },
       {
         nombre: "Affogato",
         descripcion: "Espresso sobre helado de vainilla.",
         precio: "S/. 10.00",
-        imagen: ""
+        imagen: "/affogato.png"
       },
       {
         nombre: "Chocolate",
         descripcion: "Bebida con cacao cremoso y leche caliente.",
         precio: "S/. 15.00",
-        imagen: ""
+        imagen: "/chocolate.png"
       }
     ]
   },
@@ -92,73 +92,73 @@ export const DEFAULT_MENU_DATA: Category[] = [
         nombre: "Iced Americano",
         descripcion: "",
         precio: "S/. 11.00",
-        imagen: ""
+        imagen: "/iced_americano.png"
       },
       {
         nombre: "Iced Cappuccino",
         descripcion: "",
         precio: "S/. 17.00",
-        imagen: ""
+        imagen: "/iced_cappuccino.png"
       },
       {
         nombre: "Frappe de Matcha",
         descripcion: "",
         precio: "S/. 20.00",
-        imagen: ""
+        imagen: "/frappe_de_matcha.png"
       },
       {
         nombre: "Iced Latte",
         descripcion: "",
         precio: "S/. 15.00",
-        imagen: ""
+        imagen: "/iced_latte.png"
       },
       {
         nombre: "Cold Brew de Naranja o maracuyá",
         descripcion: "",
         precio: "S/. 17.00",
-        imagen: ""
+        imagen: "/cold_brew.png"
       },
       {
         nombre: "Milkshake",
         descripcion: "",
         precio: "S/. 20.00",
-        imagen: ""
+        imagen: "/milkshake.png"
       },
       {
         nombre: "Frappe de Caramelo",
         descripcion: "",
         precio: "S/. 20.00",
-        imagen: ""
+        imagen: "/frappe_de_caramelo.png"
       },
       {
         nombre: "Frappe de Chocolate",
         descripcion: "",
         precio: "S/. 20.00",
-        imagen: ""
+        imagen: "/frappe_de_chocolate.png"
       },
       {
         nombre: "Frappe de Oreo",
         descripcion: "",
         precio: "S/. 20.00",
-        imagen: ""
+        imagen: "/frappe_de_oreo.png"
       },
       {
         nombre: "Frappe de Frutas",
         descripcion: "",
         precio: "S/. 20.00",
-        imagen: ""
+        imagen: "/frappe_de_frutas.png"
       },
       {
         nombre: "Frappe de Menta",
         descripcion: "",
         precio: "S/. 20.00",
-        imagen: ""
+        imagen: "/frappe_de_menta.png"
       },
       {
         nombre: "Frappe de choco menta",
         descripcion: "",
         precio: "S/. 20.00",
-        imagen: ""
+        imagen: "/frappe_de_choco_menta.png"
       }
     ]
   },
@@ -170,19 +170,19 @@ export const DEFAULT_MENU_DATA: Category[] = [
         nombre: "Cafetera Italiana",
         descripcion: "Método de filtrado que resalta sabores limpios y brillantes en cada taza.",
         precio: "S/. 12.00",
-        imagen: ""
+        imagen: "/cafetera_italiana.png"
       },
       {
         nombre: "Francesa",
         descripcion: "Filtrado que produce un café suave y equilibrado con cuerpo ligero.",
         precio: "S/. 12.00",
-        imagen: ""
+        imagen: "/francesa.png"
       },
       {
         nombre: "Chemex",
         descripcion: "Extracción completa para un café con cuerpo intenso y aceites naturales.",
         precio: "S/. 12.00",
-        imagen: ""
+        imagen: "/chemex.png"
       },
       {
         nombre: "V60",
@@ -200,19 +200,19 @@ export const DEFAULT_MENU_DATA: Category[] = [
         nombre: "Agua mineral sin gas",
         descripcion: "",
         precio: "S/. 3.50",
-        imagen: ""
+        imagen: "/agua_mineral_sin_gas.png"
       },
       {
         nombre: "Agua mineral con gas",
         descripcion: "",
         precio: "S/. 3.50",
-        imagen: ""
+        imagen: "/agua_mineral_con_gas.png"
       },
       {
         nombre: "Viejas confiables (Inka o Coca Cola)",
         descripcion: "",
         precio: "S/. 4.00",
-        imagen: ""
+        imagen: "/viejas_confiables.jpg"
       },
       {
         nombre: "Refresco de Chicha o Maracuyá",

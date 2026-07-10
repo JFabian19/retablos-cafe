@@ -19,7 +19,10 @@ const MARQUEE_TEXT = "☕ EL HOGAR DEL CAFÉ • PASIÓN EN CADA TAZA • CAFÉ 
 
 // Mapa de imágenes locales por defecto para platos conocidos (vacío por defecto para la plantilla)
 const LOCAL_IMAGES: Record<string, string> = {
-  // "Nombre del Plato": "nombre_imagen.jpg",
+  "Americano": "/americano.png",
+  "Capuccino": "/capuccino.png",
+  "C. de Canela": "/c_de_canela.png",
+  "Espresso": "/espresso.png",
 };
 
 interface Dish {
@@ -42,6 +45,7 @@ interface CartItem {
   temperatura?: string;
   azucar?: string;
   saborAlitas?: string;
+  sabor?: string;
 }
 
 export default function App() {
@@ -57,7 +61,8 @@ export default function App() {
   const [customOptions, setCustomOptions] = useState({
     temperatura: 'Helada',
     azucar: 'Normal',
-    saborAlitas: 'Barbecue'
+    saborAlitas: 'Barbecue',
+    sabor: ''
   });
 
   // States for Birthday Form
@@ -158,13 +163,17 @@ export default function App() {
       cat.items.some(item => item.nombre === dish.nombre)
     );
     const isWings = dish.nombre.toLowerCase().includes("alitas");
+    const isColdBrew = dish.nombre.toLowerCase().includes("cold brew");
+    const isSoda = dish.nombre.toLowerCase().includes("viejas confiables");
+    const isRefreshment = dish.nombre.toLowerCase().includes("refresco de chicha");
 
     if (isJuice) {
       setCustomizingDish(dish);
       setCustomOptions({
         temperatura: 'Helada',
         azucar: 'Normal',
-        saborAlitas: ''
+        saborAlitas: '',
+        sabor: ''
       });
       return;
     }
@@ -174,7 +183,41 @@ export default function App() {
       setCustomOptions({
         temperatura: '',
         azucar: '',
-        saborAlitas: 'Barbecue'
+        saborAlitas: 'Barbecue',
+        sabor: ''
+      });
+      return;
+    }
+
+    if (isColdBrew) {
+      setCustomizingDish(dish);
+      setCustomOptions({
+        temperatura: '',
+        azucar: '',
+        saborAlitas: '',
+        sabor: 'Naranja'
+      });
+      return;
+    }
+
+    if (isSoda) {
+      setCustomizingDish(dish);
+      setCustomOptions({
+        temperatura: '',
+        azucar: '',
+        saborAlitas: '',
+        sabor: 'Inka Cola'
+      });
+      return;
+    }
+
+    if (isRefreshment) {
+      setCustomizingDish(dish);
+      setCustomOptions({
+        temperatura: '',
+        azucar: '',
+        saborAlitas: '',
+        sabor: 'Chicha'
       });
       return;
     }
@@ -182,14 +225,15 @@ export default function App() {
     addCustomizedToCart(dish, {});
   };
 
-  const addCustomizedToCart = (dish: Dish, options: { temperatura?: string; azucar?: string; saborAlitas?: string }) => {
+  const addCustomizedToCart = (dish: Dish, options: { temperatura?: string; azucar?: string; saborAlitas?: string; sabor?: string }) => {
     setCart(prev => {
       const existing = prev.find(i => 
         i.nombre === dish.nombre && 
         i.precio === dish.precio &&
         i.temperatura === options.temperatura &&
         i.azucar === options.azucar &&
-        i.saborAlitas === options.saborAlitas
+        i.saborAlitas === options.saborAlitas &&
+        i.sabor === options.sabor
       );
       if (existing) {
         return prev.map(i =>
@@ -197,7 +241,8 @@ export default function App() {
            i.precio === dish.precio &&
            i.temperatura === options.temperatura &&
            i.azucar === options.azucar &&
-           i.saborAlitas === options.saborAlitas)
+           i.saborAlitas === options.saborAlitas &&
+           i.sabor === options.sabor)
             ? { ...i, cantidad: i.cantidad + 1 }
             : i
         );
@@ -208,7 +253,8 @@ export default function App() {
         cantidad: 1,
         temperatura: options.temperatura || undefined,
         azucar: options.azucar || undefined,
-        saborAlitas: options.saborAlitas || undefined
+        saborAlitas: options.saborAlitas || undefined,
+        sabor: options.sabor || undefined
       }];
     });
   };
@@ -217,7 +263,7 @@ export default function App() {
     nombre: string, 
     precio: string, 
     delta: number, 
-    options?: { temperatura?: string; azucar?: string; saborAlitas?: string }
+    options?: { temperatura?: string; azucar?: string; saborAlitas?: string; sabor?: string }
   ) => {
     setCart(prev =>
       prev
@@ -225,7 +271,8 @@ export default function App() {
           const matchesOptions = !options || (
             i.temperatura === options.temperatura &&
             i.azucar === options.azucar &&
-            i.saborAlitas === options.saborAlitas
+            i.saborAlitas === options.saborAlitas &&
+            i.sabor === options.sabor
           );
           if (i.nombre === nombre && i.precio === precio && matchesOptions) {
             const newQty = i.cantidad + delta;
@@ -253,6 +300,7 @@ export default function App() {
       if (item.temperatura) opts.push(`Temp: ${item.temperatura}`);
       if (item.azucar) opts.push(`Azúcar: ${item.azucar}`);
       if (item.saborAlitas) opts.push(`Sabor: ${item.saborAlitas}`);
+      if (item.sabor) opts.push(`Sabor: ${item.sabor}`);
       
       const optString = opts.length > 0 ? ` [${opts.join(', ')}]` : '';
       message += `• ${item.cantidad} x ${item.nombre}${optString} (${item.precio})\n`;
@@ -367,6 +415,7 @@ export default function App() {
       if (item.temperatura) opts.push(`Temp: ${item.temperatura}`);
       if (item.azucar) opts.push(`Azúcar: ${item.azucar}`);
       if (item.saborAlitas) opts.push(`Sabor: ${item.saborAlitas}`);
+      if (item.sabor) opts.push(`Sabor: ${item.sabor}`);
       
       const optString = opts.length > 0 ? ` [${opts.join(', ')}]` : '';
       message += `• ${item.cantidad} x ${item.nombre}${optString} (${item.precio})\n`;
@@ -704,31 +753,32 @@ export default function App() {
               <div className="space-y-3 mb-8">
                 {cart.map(item => (
                   <div
-                    key={`${item.nombre}-${item.precio}-${item.temperatura || ''}-${item.azucar || ''}-${item.saborAlitas || ''}`}
+                    key={`${item.nombre}-${item.precio}-${item.temperatura || ''}-${item.azucar || ''}-${item.saborAlitas || ''}-${item.sabor || ''}`}
                     className="flex items-center gap-4 bg-gray-50 p-4 rounded-2xl"
                   >
                     <div className="flex-1 min-w-0">
                       <h4 className="font-dish font-semibold text-dark text-sm truncate">{item.nombre}</h4>
-                      {(item.temperatura || item.azucar || item.saborAlitas) && (
+                      {(item.temperatura || item.azucar || item.saborAlitas || item.sabor) && (
                         <div className="text-[10px] text-[#6F4E37] font-semibold space-y-0.5 mt-0.5">
                           {item.temperatura && <div>🌡️ {item.temperatura}</div>}
                           {item.azucar && <div>🍬 {item.azucar}</div>}
                           {item.saborAlitas && <div>🍗 Sabor: {item.saborAlitas}</div>}
+                          {item.sabor && <div>✨ Sabor: {item.sabor}</div>}
                         </div>
                       )}
                       <p className="font-dish text-xs text-primary font-bold mt-1">{item.precio}</p>
                     </div>
                     <div className="flex items-center gap-3 bg-white px-3 py-1.5 rounded-xl border border-gray-100">
-                      <button onClick={() => updateQuantity(item.nombre, item.precio, -1, { temperatura: item.temperatura, azucar: item.azucar, saborAlitas: item.saborAlitas })} className="text-gray-400 cursor-pointer">
+                      <button onClick={() => updateQuantity(item.nombre, item.precio, -1, { temperatura: item.temperatura, azucar: item.azucar, saborAlitas: item.saborAlitas, sabor: item.sabor })} className="text-gray-400 cursor-pointer">
                         <Minus size={16} />
                       </button>
                       <span className="font-dish font-bold text-sm w-4 text-center">{item.cantidad}</span>
-                      <button onClick={() => updateQuantity(item.nombre, item.precio, 1, { temperatura: item.temperatura, azucar: item.azucar, saborAlitas: item.saborAlitas })} className="text-primary cursor-pointer">
+                      <button onClick={() => updateQuantity(item.nombre, item.precio, 1, { temperatura: item.temperatura, azucar: item.azucar, saborAlitas: item.saborAlitas, sabor: item.sabor })} className="text-primary cursor-pointer">
                         <Plus size={16} />
                       </button>
                     </div>
                     <button
-                      onClick={() => updateQuantity(item.nombre, item.precio, -item.cantidad, { temperatura: item.temperatura, azucar: item.azucar, saborAlitas: item.saborAlitas })}
+                      onClick={() => updateQuantity(item.nombre, item.precio, -item.cantidad, { temperatura: item.temperatura, azucar: item.azucar, saborAlitas: item.saborAlitas, sabor: item.sabor })}
                       className="text-red-300 ml-1 cursor-pointer hover:text-red-400 transition-colors"
                     >
                       <Trash2 size={18} />
@@ -1257,13 +1307,70 @@ export default function App() {
                   </div>
                 )}
 
+                {/* Generic Sabor Customization (Cold Brew, Soda, Refreshment) */}
+                {customOptions.sabor !== '' && customizingDish && (
+                  <div>
+                    <label className="text-[11px] font-bold text-[#6F4E37] uppercase ml-1 mb-2 block">
+                      Elige tu opción
+                    </label>
+                    <div className="grid grid-cols-2 gap-2 bg-white/30 backdrop-blur-sm p-1 rounded-xl border border-white/40">
+                      {customizingDish.nombre.toLowerCase().includes("cold brew") &&
+                        ['Naranja', 'Maracuyá'].map(s => (
+                          <button
+                            key={s}
+                            type="button"
+                            onClick={() => setCustomOptions(prev => ({ ...prev, sabor: s }))}
+                            className={`py-2.5 text-xs font-bold rounded-lg transition-all cursor-pointer ${
+                              customOptions.sabor === s
+                                ? 'bg-[#6F4E37] text-white shadow-sm'
+                                : 'text-[#2C1E16] hover:bg-white/20'
+                            }`}
+                          >
+                            {s}
+                          </button>
+                        ))}
+                      {customizingDish.nombre.toLowerCase().includes("viejas confiables") &&
+                        ['Inka Cola', 'Coca Cola'].map(s => (
+                          <button
+                            key={s}
+                            type="button"
+                            onClick={() => setCustomOptions(prev => ({ ...prev, sabor: s }))}
+                            className={`py-2.5 text-xs font-bold rounded-lg transition-all cursor-pointer ${
+                              customOptions.sabor === s
+                                ? 'bg-[#6F4E37] text-white shadow-sm'
+                                : 'text-[#2C1E16] hover:bg-white/20'
+                            }`}
+                          >
+                            {s}
+                          </button>
+                        ))}
+                      {customizingDish.nombre.toLowerCase().includes("refresco de chicha") &&
+                        ['Chicha', 'Maracuyá'].map(s => (
+                          <button
+                            key={s}
+                            type="button"
+                            onClick={() => setCustomOptions(prev => ({ ...prev, sabor: s }))}
+                            className={`py-2.5 text-xs font-bold rounded-lg transition-all cursor-pointer ${
+                              customOptions.sabor === s
+                                ? 'bg-[#6F4E37] text-white shadow-sm'
+                                : 'text-[#2C1E16] hover:bg-white/20'
+                            }`}
+                          >
+                            {s}
+                          </button>
+                        ))}
+                    </div>
+                  </div>
+                )}
+
                 <button
                   type="button"
                   onClick={() => {
                     addCustomizedToCart(customizingDish, {
                       temperatura: customOptions.temperatura || undefined,
                       azucar: customOptions.azucar || undefined,
-                      saborAlitas: customOptions.saborAlitas || undefined
+                      saborAlitas: customOptions.saborAlitas || undefined,
+                      sabor: customOptions.sabor || undefined
                     });
                     setCustomizingDish(null);
                   }}
