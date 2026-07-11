@@ -46,6 +46,7 @@ interface CartItem {
   azucar?: string;
   saborAlitas?: string;
   sabor?: string;
+  topping?: string;
 }
 
 export default function App() {
@@ -61,8 +62,9 @@ export default function App() {
   const [customOptions, setCustomOptions] = useState({
     temperatura: 'Helada',
     azucar: 'Normal',
-    saborAlitas: 'Barbecue',
-    sabor: ''
+    saborAlitas: 'BBQ',
+    sabor: '',
+    topping: ''
   });
 
   // States for Birthday Form
@@ -166,6 +168,7 @@ export default function App() {
     const isColdBrew = dish.nombre.toLowerCase().includes("cold brew");
     const isSoda = dish.nombre.toLowerCase().includes("viejas confiables");
     const isRefreshment = dish.nombre.toLowerCase().includes("refresco de chicha");
+    const isIceCream = dish.nombre.toLowerCase().includes("bola");
 
     if (isJuice) {
       setCustomizingDish(dish);
@@ -173,7 +176,8 @@ export default function App() {
         temperatura: 'Helada',
         azucar: 'Normal',
         saborAlitas: '',
-        sabor: ''
+        sabor: '',
+        topping: ''
       });
       return;
     }
@@ -183,8 +187,9 @@ export default function App() {
       setCustomOptions({
         temperatura: '',
         azucar: '',
-        saborAlitas: 'Barbecue',
-        sabor: ''
+        saborAlitas: 'BBQ',
+        sabor: '',
+        topping: ''
       });
       return;
     }
@@ -195,7 +200,8 @@ export default function App() {
         temperatura: '',
         azucar: '',
         saborAlitas: '',
-        sabor: 'Naranja'
+        sabor: 'Naranja',
+        topping: ''
       });
       return;
     }
@@ -206,7 +212,8 @@ export default function App() {
         temperatura: '',
         azucar: '',
         saborAlitas: '',
-        sabor: 'Inka Cola'
+        sabor: 'Inka Cola',
+        topping: ''
       });
       return;
     }
@@ -217,7 +224,20 @@ export default function App() {
         temperatura: '',
         azucar: '',
         saborAlitas: '',
-        sabor: 'Chicha'
+        sabor: 'Chicha',
+        topping: ''
+      });
+      return;
+    }
+
+    if (isIceCream) {
+      setCustomizingDish(dish);
+      setCustomOptions({
+        temperatura: '',
+        azucar: '',
+        saborAlitas: '',
+        sabor: '',
+        topping: 'Fosh'
       });
       return;
     }
@@ -225,36 +245,50 @@ export default function App() {
     addCustomizedToCart(dish, {});
   };
 
-  const addCustomizedToCart = (dish: Dish, options: { temperatura?: string; azucar?: string; saborAlitas?: string; sabor?: string }) => {
+  const addCustomizedToCart = (dish: Dish, options: { temperatura?: string; azucar?: string; saborAlitas?: string; sabor?: string; topping?: string }) => {
+    let finalPrecio = dish.precio;
+    if (options.topping) {
+      let extra = 0;
+      if (options.topping === 'Granola' || options.topping === 'Chips' || options.topping === 'Frutas') {
+        extra = 1;
+      }
+      if (extra > 0) {
+        const basePrice = parseFloat(dish.precio.replace(/^[^\d]*/, '')) || 0;
+        finalPrecio = `S/. ${(basePrice + extra).toFixed(2)}`;
+      }
+    }
     setCart(prev => {
       const existing = prev.find(i => 
         i.nombre === dish.nombre && 
-        i.precio === dish.precio &&
+        i.precio === finalPrecio &&
         i.temperatura === options.temperatura &&
         i.azucar === options.azucar &&
         i.saborAlitas === options.saborAlitas &&
-        i.sabor === options.sabor
+        i.sabor === options.sabor &&
+        i.topping === options.topping
       );
       if (existing) {
         return prev.map(i =>
           (i.nombre === dish.nombre && 
-           i.precio === dish.precio &&
+           i.precio === finalPrecio &&
            i.temperatura === options.temperatura &&
            i.azucar === options.azucar &&
            i.saborAlitas === options.saborAlitas &&
-           i.sabor === options.sabor)
+           i.sabor === options.sabor &&
+           i.topping === options.topping)
             ? { ...i, cantidad: i.cantidad + 1 }
             : i
         );
       }
       return [...prev, { 
         nombre: dish.nombre, 
-        precio: dish.precio, 
+        precio: finalPrecio, 
         cantidad: 1,
         temperatura: options.temperatura || undefined,
         azucar: options.azucar || undefined,
         saborAlitas: options.saborAlitas || undefined,
-        sabor: options.sabor || undefined
+        sabor: options.sabor || undefined,
+        topping: options.topping || undefined
       }];
     });
   };
@@ -263,7 +297,7 @@ export default function App() {
     nombre: string, 
     precio: string, 
     delta: number, 
-    options?: { temperatura?: string; azucar?: string; saborAlitas?: string; sabor?: string }
+    options?: { temperatura?: string; azucar?: string; saborAlitas?: string; sabor?: string; topping?: string }
   ) => {
     setCart(prev =>
       prev
@@ -272,7 +306,8 @@ export default function App() {
             i.temperatura === options.temperatura &&
             i.azucar === options.azucar &&
             i.saborAlitas === options.saborAlitas &&
-            i.sabor === options.sabor
+            i.sabor === options.sabor &&
+            i.topping === options.topping
           );
           if (i.nombre === nombre && i.precio === precio && matchesOptions) {
             const newQty = i.cantidad + delta;
@@ -301,6 +336,7 @@ export default function App() {
       if (item.azucar) opts.push(`Azúcar: ${item.azucar}`);
       if (item.saborAlitas) opts.push(`Sabor: ${item.saborAlitas}`);
       if (item.sabor) opts.push(`Sabor: ${item.sabor}`);
+      if (item.topping) opts.push(`Topping: ${item.topping}`);
       
       const optString = opts.length > 0 ? ` [${opts.join(', ')}]` : '';
       message += `• ${item.cantidad} x ${item.nombre}${optString} (${item.precio})\n`;
@@ -416,6 +452,7 @@ export default function App() {
       if (item.azucar) opts.push(`Azúcar: ${item.azucar}`);
       if (item.saborAlitas) opts.push(`Sabor: ${item.saborAlitas}`);
       if (item.sabor) opts.push(`Sabor: ${item.sabor}`);
+      if (item.topping) opts.push(`Topping: ${item.topping}`);
       
       const optString = opts.length > 0 ? ` [${opts.join(', ')}]` : '';
       message += `• ${item.cantidad} x ${item.nombre}${optString} (${item.precio})\n`;
@@ -753,7 +790,7 @@ export default function App() {
               <div className="space-y-3 mb-8">
                 {cart.map(item => (
                   <div
-                    key={`${item.nombre}-${item.precio}-${item.temperatura || ''}-${item.azucar || ''}-${item.saborAlitas || ''}-${item.sabor || ''}`}
+                    key={`${item.nombre}-${item.precio}-${item.temperatura || ''}-${item.azucar || ''}-${item.saborAlitas || ''}-${item.sabor || ''}-${item.topping || ''}`}
                     className="flex items-center gap-4 bg-gray-50 p-4 rounded-2xl"
                   >
                     <div className="flex-1 min-w-0">
@@ -764,21 +801,22 @@ export default function App() {
                           {item.azucar && <div>🍬 {item.azucar}</div>}
                           {item.saborAlitas && <div>🍗 Sabor: {item.saborAlitas}</div>}
                           {item.sabor && <div>✨ Sabor: {item.sabor}</div>}
+                          {item.topping && <div>🍦 Topping: {item.topping}</div>}
                         </div>
                       )}
                       <p className="font-dish text-xs text-primary font-bold mt-1">{item.precio}</p>
                     </div>
                     <div className="flex items-center gap-3 bg-white px-3 py-1.5 rounded-xl border border-gray-100">
-                      <button onClick={() => updateQuantity(item.nombre, item.precio, -1, { temperatura: item.temperatura, azucar: item.azucar, saborAlitas: item.saborAlitas, sabor: item.sabor })} className="text-gray-400 cursor-pointer">
+                      <button onClick={() => updateQuantity(item.nombre, item.precio, -1, { temperatura: item.temperatura, azucar: item.azucar, saborAlitas: item.saborAlitas, sabor: item.sabor, topping: item.topping })} className="text-gray-400 cursor-pointer">
                         <Minus size={16} />
                       </button>
                       <span className="font-dish font-bold text-sm w-4 text-center">{item.cantidad}</span>
-                      <button onClick={() => updateQuantity(item.nombre, item.precio, 1, { temperatura: item.temperatura, azucar: item.azucar, saborAlitas: item.saborAlitas, sabor: item.sabor })} className="text-primary cursor-pointer">
+                      <button onClick={() => updateQuantity(item.nombre, item.precio, 1, { temperatura: item.temperatura, azucar: item.azucar, saborAlitas: item.saborAlitas, sabor: item.sabor, topping: item.topping })} className="text-primary cursor-pointer">
                         <Plus size={16} />
                       </button>
                     </div>
                     <button
-                      onClick={() => updateQuantity(item.nombre, item.precio, -item.cantidad, { temperatura: item.temperatura, azucar: item.azucar, saborAlitas: item.saborAlitas, sabor: item.sabor })}
+                      onClick={() => updateQuantity(item.nombre, item.precio, -item.cantidad, { temperatura: item.temperatura, azucar: item.azucar, saborAlitas: item.saborAlitas, sabor: item.sabor, topping: item.topping })}
                       className="text-red-300 ml-1 cursor-pointer hover:text-red-400 transition-colors"
                     >
                       <Trash2 size={18} />
@@ -1285,10 +1323,10 @@ export default function App() {
                     <label className="text-[11px] font-bold text-[#6F4E37] uppercase ml-1 mb-2 block">Elige el Sabor</label>
                     <div className="grid grid-cols-2 gap-2 bg-white/30 backdrop-blur-sm p-1 rounded-xl border border-white/40">
                       {[
-                        { id: 'Barbecue', label: 'Barbecue' },
-                        { id: 'Salsa de maracuyá', label: 'Salsa Maracuyá' },
-                        { id: 'Salsa de maracumango', label: 'Maracumango' },
-                        { id: 'Salsa de búfalo', label: 'Salsa Búfalo' }
+                        { id: 'BBQ', label: 'BBQ' },
+                        { id: 'Maracuyá', label: 'Maracuyá' },
+                        { id: 'Maracumango', label: 'Maracumango' },
+                        { id: 'Búfalo', label: 'Búfalo' }
                       ].map(sabor => (
                         <button
                           key={sabor.id}
@@ -1363,6 +1401,34 @@ export default function App() {
                   </div>
                 )}
 
+                {/* Topping Customization (Only for Ice Cream) */}
+                {customOptions.topping !== '' && (
+                  <div>
+                    <label className="text-[11px] font-bold text-[#6F4E37] uppercase ml-1 mb-2 block">Elige tu Topping (Elige uno)</label>
+                    <div className="grid grid-cols-2 gap-2 bg-white/30 backdrop-blur-sm p-1 rounded-xl border border-white/40">
+                      {[
+                        { id: 'Fosh', label: 'Fosh (+S/. 0.00)' },
+                        { id: 'Granola', label: 'Granola (+S/. 1.00)' },
+                        { id: 'Chips', label: 'Chips (+S/. 1.00)' },
+                        { id: 'Frutas', label: 'Frutas (+S/. 1.00)' }
+                      ].map(top => (
+                        <button
+                          key={top.id}
+                          type="button"
+                          onClick={() => setCustomOptions(prev => ({ ...prev, topping: top.id }))}
+                          className={`py-2.5 text-xs font-bold rounded-lg transition-all cursor-pointer ${
+                            customOptions.topping === top.id
+                              ? 'bg-[#6F4E37] text-white shadow-sm'
+                              : 'text-[#2C1E16] hover:bg-white/20'
+                          }`}
+                        >
+                          {top.label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
                 <button
                   type="button"
                   onClick={() => {
@@ -1370,7 +1436,8 @@ export default function App() {
                       temperatura: customOptions.temperatura || undefined,
                       azucar: customOptions.azucar || undefined,
                       saborAlitas: customOptions.saborAlitas || undefined,
-                      sabor: customOptions.sabor || undefined
+                      sabor: customOptions.sabor || undefined,
+                      topping: customOptions.topping || undefined
                     });
                     setCustomizingDish(null);
                   }}

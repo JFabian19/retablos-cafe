@@ -188,7 +188,7 @@ export const DEFAULT_MENU_DATA: Category[] = [
         nombre: "V60",
         descripcion: "Café concentrado al estilo tradicional, con un sabor profundo y aromático.",
         precio: "S/. 12.00",
-        imagen: ""
+        imagen: "/v60.png"
       }
     ]
   },
@@ -218,7 +218,7 @@ export const DEFAULT_MENU_DATA: Category[] = [
         nombre: "Refresco de Chicha o Maracuyá",
         descripcion: "",
         precio: "S/. 4.00",
-        imagen: ""
+        imagen: "/refresco_de_chicha_o_maracuya.png"
       }
     ]
   },
@@ -230,55 +230,55 @@ export const DEFAULT_MENU_DATA: Category[] = [
         nombre: "Flor de jamaica, naranja, canela y clavo",
         descripcion: "Regula la presion arterial, elimina liquidos retenidos, limpia el higado, mejora la digestion y previene el estreñimiento.",
         precio: "S/. 10.00",
-        imagen: ""
+        imagen: "/flor_de_jamaica_naranja_canela_clavo.png"
       },
       {
         nombre: "Anís, Hierba Luisa y Naranja",
         descripcion: "Mejora la digestión después de comidas. Reduce gases e inflamacion abdominal. Aporta sensación de ligereza. Relajación digestiva suave.",
         precio: "S/. 10.00",
-        imagen: ""
+        imagen: "/anis_hierba_luisa_naranja.jpg"
       },
       {
         nombre: "Boldo con Limón",
         descripcion: "Favorece la digestión, alivia los gases después de las comidas. Apoya el buen funcionamiento del hígado. El toque de limón aporta vitamina C y antioxidantes que refuerzan las defensas.",
         precio: "S/. 10.00",
-        imagen: ""
+        imagen: "/boldo_con_limon.jpg"
       },
       {
         nombre: "Hierba Luisa, Naranja, canela y clavo",
         descripcion: "Ayuda al insomnio. Alivia cólicos menstruales y malestares digestivos. Regula la presión arterial y mejora la circulación. Relaja el cuerpo y la mente, ideal contra el estrés y la ansiedad.",
         precio: "S/. 10.00",
-        imagen: ""
+        imagen: "/hierba_luisa_naranja_canela_clavo.jpg"
       },
       {
         nombre: "Té de Jazmín y Limón",
         descripcion: "Relaja el sistema nervioso, ideal contra el estrés y la ansiedad. Mejora el ánimo y combate la depresión leve. Favorece la digestión y alivia malestares estomacales. Refuerza las defensas y protege el sistema respiratorio.",
         precio: "S/. 10.00",
-        imagen: ""
+        imagen: "/te_de_jazmin_y_limon.jpg"
       },
       {
         nombre: "Manzanilla con Naranja",
         descripcion: "Ideal para disminuir el estrés diario y conciliar un sueño reparador. Calma malestares digestivos leves como cólicos o indigestión. La naranja aporta un plus de vitamina C y antioxidantes que cuidan el sistema inmunológico.",
         precio: "S/. 10.00",
-        imagen: ""
+        imagen: "/manzanilla_con_naranja.jpg"
       },
       {
         nombre: "Menta, Limón y Arándanos rojos",
         descripcion: "Mejora la digestión and alivia malestares estomacales. Previene infecciones urinarias y limpia las vías urinarias y refuerza el sistema inmunológico. Elimina líquidos retenidos y desinflama.",
         precio: "S/. 10.00",
-        imagen: ""
+        imagen: "/menta_limon_arandanos_rojos.jpg"
       },
       {
         nombre: "Cedrón, Muña y Limón",
         descripcion: "Calma el colon irritable. Alivia gases, cólicos y malestares digestivos. Descongestiona las vías respiratorias. Refuerza el sistema inmunológico y reduce el estrés.",
         precio: "S/. 10.00",
-        imagen: ""
+        imagen: "/cedron_muna_limon.jpg"
       },
       {
         nombre: "Valeriana, Toronjil y Limón",
         descripcion: "Ayuda a conciliar el sueño naturalmente. Disminuye la ansiedad nocturna. Favorece un sueño más profundo y continuo. Ideal para personas con mente acelerada. Es un ritual nocturno relajante.",
         precio: "S/. 10.00",
-        imagen: ""
+        imagen: "/valeriana_toronjil_limon.jpg"
       }
     ]
   },
@@ -290,79 +290,79 @@ export const DEFAULT_MENU_DATA: Category[] = [
         nombre: "Papaya con piña",
         descripcion: "",
         precio: "S/. 15.00",
-        imagen: ""
+        imagen: "/papaya_con_pina.png"
       },
       {
         nombre: "Maracuyá con piña",
         descripcion: "",
         precio: "S/. 15.00",
-        imagen: ""
+        imagen: "/maracuya_con_pina.png"
       },
       {
         nombre: "Fresa, piña y maracuyá",
         descripcion: "",
         precio: "S/. 15.00",
-        imagen: ""
+        imagen: "/fresa_pina_maracuya.png"
       },
       {
         nombre: "Papaya",
         descripcion: "",
         precio: "S/. 13.00",
-        imagen: ""
+        imagen: "/papaya.png"
       },
       {
         nombre: "Fresa",
         descripcion: "",
         precio: "S/. 13.00",
-        imagen: ""
+        imagen: "/fresa.png"
       },
       {
         nombre: "Plátano",
         descripcion: "",
         precio: "S/. 10.00",
-        imagen: ""
+        imagen: "/platano.png"
       },
       {
         nombre: "Piña",
         descripcion: "",
         precio: "S/. 13.00",
-        imagen: ""
+        imagen: "/pina.png"
       },
       {
         nombre: "Maracuyá",
         descripcion: "",
         precio: "S/. 13.00",
-        imagen: ""
+        imagen: "/maracuya.png"
       },
       {
         nombre: "Mango",
         descripcion: "",
         precio: "S/. 13.00",
-        imagen: ""
+        imagen: "/mango.png"
       },
       {
         nombre: "Lúcuma",
         descripcion: "",
         precio: "S/. 13.00",
-        imagen: ""
+        imagen: "/lucuma.png"
       },
       {
         nombre: "Plátano con leche",
         descripcion: "",
         precio: "S/. 15.00",
-        imagen: ""
+        imagen: "/platano_con_leche.png"
       },
       {
         nombre: "Especial",
         descripcion: "",
         precio: "S/. 15.00",
-        imagen: ""
+        imagen: "/especial.png"
       },
       {
         nombre: "Fresa con leche",
         descripcion: "",
         precio: "S/. 15.00",
-        imagen: ""
+        imagen: "/fresa_con_leche.png"
       }
     ]
   },
@@ -374,37 +374,37 @@ export const DEFAULT_MENU_DATA: Category[] = [
         nombre: "De Pollo",
         descripcion: "Pollo, mayonesa, apio y pecanas.",
         precio: "S/. 15.00",
-        imagen: ""
+        imagen: "/croissant_de_pollo.png"
       },
       {
         nombre: "De Piña",
         descripcion: "Pollo, mayonesa, piña y apio.",
         precio: "S/. 15.00",
-        imagen: ""
+        imagen: "/croissant_de_pina.png"
       },
       {
         nombre: "De Durazno",
         descripcion: "Pollo, mayonesa, durazno y apio.",
         precio: "S/. 15.00",
-        imagen: ""
+        imagen: "/croissant_de_durazno.png"
       },
       {
         nombre: "Clásico Jamón del país y queso",
         descripcion: "",
         precio: "S/. 12.00",
-        imagen: ""
+        imagen: "/croissant_clasico_jamon_y_queso.jpg"
       },
       {
         nombre: "Capresse",
-        descripcion: "Pan tostado con rodajas de tomate fresco, mozarella y albahaca.",
+        descripcion: "Pan tostado con rodajas de tomate fresco, mozarella and albahaca.",
         precio: "S/. 10.00",
-        imagen: ""
+        imagen: "/croissant_capresse.jpg"
       },
       {
         nombre: "Jamón y queso",
         descripcion: "Pan tostado con aceite de oliva, jamón y queso gouda.",
         precio: "S/. 12.00",
-        imagen: ""
+        imagen: "/croissant_jamon_y_queso.png"
       }
     ]
   },
@@ -416,13 +416,13 @@ export const DEFAULT_MENU_DATA: Category[] = [
         nombre: "Dulce tentación de fresa",
         descripcion: "Con crema pastelera, chantilli y fresa.",
         precio: "S/. 17.00",
-        imagen: ""
+        imagen: "/croissant_dulce_tentacion_de_fresa.png"
       },
       {
         nombre: "Beso de crema",
         descripcion: "Relleno con crema pastelera y azúcar impalpable.",
         precio: "S/. 14.00",
-        imagen: ""
+        imagen: "/croissant_beso_de_crema.jpg"
       }
     ]
   },
@@ -434,55 +434,55 @@ export const DEFAULT_MENU_DATA: Category[] = [
         nombre: "Club Sandwich",
         descripcion: "Pollo, jamón, tocino, queso mozarella y gouda, tomate, lechuga y papas caporales.",
         precio: "S/. 27.00",
-        imagen: ""
+        imagen: "/club_sandwich.jpg"
       },
       {
         nombre: "Retablo's Pizza",
         descripcion: "Pan tradicional, salsa pizzera, tomate, cabanossi, pepperoni, queso mozzarella y oregano al gusto.",
         precio: "S/. 25.00",
-        imagen: ""
+        imagen: "/retablos_pizza.jpg"
       },
       {
         nombre: "Salchipapa",
         descripcion: "Clásica combinación de papas caporales y jugosas salchichas, acompañadas de salsas.",
         precio: "S/. 13.00",
-        imagen: ""
+        imagen: "/salchipapa.jpg"
       },
       {
         nombre: "Salchi Royal",
         descripcion: "Papas caporales y jugosas salchichas, toppings especiales.",
         precio: "S/. 15.00",
-        imagen: ""
+        imagen: "/salchi_royal.png"
       },
       {
         nombre: "Choripapa",
         descripcion: "Papas caporales acompañadas de chorizos artesanales y salsas al gusto.",
         precio: "S/. 14.00",
-        imagen: ""
+        imagen: "/choripapa.jpg"
       },
       {
         nombre: "Porción de papas caporales",
         descripcion: "Papas nativas peruanas crujientes, sazonadas con orégano y perfectas para compartir.",
         precio: "S/. 10.00",
-        imagen: ""
+        imagen: "/porcion_de_papas_caporales.jpg"
       },
       {
         nombre: "Salchi Ya Vuelta",
         descripcion: "Hecha con productos típicos de la selva como chorizo amazónico, cecina, platano maduro y aji de cocona.",
         precio: "S/. 18.50",
-        imagen: ""
+        imagen: "/salchi_ya_vuelta.jpg"
       },
       {
         nombre: "Sándwich con filete de pollo",
         descripcion: "Un filete de pollo grillado dentro de un pan Ciabatta con semillas de ajonjolí, salsa honey, tomate y palta.",
         precio: "S/. 15.00",
-        imagen: ""
+        imagen: "/sandwich_con_filete_de_pollo.jpg"
       },
       {
         nombre: "Alitas",
         descripcion: "Crujientes alitas bañadas en tu salsa favorita (BBQ, maracuyá, maracumango o búfalo).",
         precio: "S/. 22.00",
-        imagen: ""
+        imagen: "/alitas.jpg"
       }
     ]
   },
@@ -494,37 +494,37 @@ export const DEFAULT_MENU_DATA: Category[] = [
         nombre: "Choco Capricho",
         descripcion: "",
         precio: "S/. 15.00",
-        imagen: ""
+        imagen: "/choco_capricho.png"
       },
       {
         nombre: "Delicia de zanahoria",
         descripcion: "",
         precio: "S/. 15.00",
-        imagen: ""
+        imagen: "/delicia_de_zanahoria.jpg"
       },
       {
         nombre: "Bocado de Limón",
         descripcion: "",
         precio: "S/. 12.00",
-        imagen: ""
+        imagen: "/bocado_de_limon.png"
       },
       {
         nombre: "Wafle frutado",
         descripcion: "",
         precio: "S/. 17.00",
-        imagen: ""
+        imagen: "/wafle_frutado.jpg"
       },
       {
         nombre: "Cucharon de fresa",
         descripcion: "",
         precio: "S/. 10.00",
-        imagen: ""
+        imagen: "/cucharon_de_fresa.png"
       },
       {
         nombre: "Cucharon de durazno",
         descripcion: "",
         precio: "S/. 10.00",
-        imagen: ""
+        imagen: "/cucharon_de_durazno.png"
       }
     ]
   },
@@ -536,13 +536,13 @@ export const DEFAULT_MENU_DATA: Category[] = [
         nombre: "Una Bola",
         descripcion: "Elige entre cono o copa.",
         precio: "S/. 5.00",
-        imagen: ""
+        imagen: "/una_bola.png"
       },
       {
         nombre: "Dos Bolas",
         descripcion: "Elige entre cono o copa.",
         precio: "S/. 8.00",
-        imagen: ""
+        imagen: "/dos_bolas.jpg"
       }
     ]
   }
