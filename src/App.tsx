@@ -655,14 +655,13 @@ export default function App() {
 
             <div className="grid grid-cols-2 gap-4">
               {cat.items.map((dish, idx) => (
-                <motion.div
+                <div
                   key={idx}
-                  whileHover={{ y: -6, scale: 1.02 }}
-                  className="liquid-glass rounded-[2rem] overflow-hidden flex flex-col border border-white/50 shadow-md hover:shadow-lg hover:border-white/80 transition-all duration-300 relative z-10"
+                  className="liquid-glass dish-card rounded-[2rem] overflow-hidden flex flex-col border border-white/50 shadow-md hover:shadow-lg hover:border-white/80 transition-all duration-300 relative z-10"
                 >
                   <div className="bg-primary/5 aspect-square flex items-center justify-center relative overflow-hidden p-2.5 border-b border-white/30">
                     {dish.imagen ? (
-                      <img src={dish.imagen} alt={dish.nombre} className="w-full h-full object-cover absolute inset-0 transition-transform duration-500 hover:scale-110" />
+                      <img src={dish.imagen} alt={dish.nombre} loading="lazy" className="w-full h-full object-cover absolute inset-0 transition-transform duration-500 hover:scale-110" />
                     ) : (
                       <span className="font-dish font-bold text-[10px] text-primary uppercase tracking-wider text-center px-2">
                         Retablo's Cafe
@@ -693,7 +692,7 @@ export default function App() {
                       </motion.button>
                     </div>
                   </div>
-                </motion.div>
+                </div>
               ))}
             </div>
           </section>
