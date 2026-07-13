@@ -38,7 +38,7 @@ export const fetchSheetData = async <T>(sheetName: string): Promise<T[]> => {
 
 // Configura aquí la URL de tu Google Apps Script Web App para poder enviar datos
 // Instrucciones: Crea un Apps Script, pega el código que te di, impleméntalo como Aplicación Web y pega la URL de ejecución aquí.
-export const WEB_APP_URL = '';
+export const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbyRyljNP8ZEa9SDjRP31M6QfsxmMqsELhd2xMDwSmtn0o3DTiVHETL5pq0kGfGeL3rWuA/exec';
 
 export const submitSheetData = async (sheetName: string, data: any): Promise<boolean> => {
   if (!WEB_APP_URL) {
