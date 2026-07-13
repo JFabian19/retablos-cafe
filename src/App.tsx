@@ -49,6 +49,36 @@ interface CartItem {
   topping?: string;
 }
 
+// Helper to check URL query parameters and session storage for salon table number
+const getInitialMesaState = () => {
+  try {
+    const urlParams = new URLSearchParams(window.location.search);
+    const mesaUrl = urlParams.get('mesa');
+    const origenUrl = urlParams.get('origen');
+    
+    if (mesaUrl) {
+      sessionStorage.setItem('retablos_mesa', mesaUrl);
+      return { isQr: true, mesa: mesaUrl };
+    }
+    if (origenUrl === 'qr') {
+      const saved = sessionStorage.getItem('retablos_mesa');
+      return { isQr: true, mesa: (saved && saved !== 'qr_generic') ? saved : '' };
+    }
+    
+    const saved = sessionStorage.getItem('retablos_mesa');
+    if (saved) {
+      return { isQr: true, mesa: saved === 'qr_generic' ? '' : saved };
+    }
+  } catch (e) {
+    console.error("Session storage read error:", e);
+  }
+  return { isQr: false, mesa: '' };
+};
+
+// Smoother transitions settings
+const backdropTransition = { duration: 0.35, ease: [0.16, 1, 0.3, 1] };
+const springTransition = { type: "spring", damping: 28, stiffness: 220 };
+
 export default function App() {
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
@@ -90,16 +120,21 @@ export default function App() {
   });
 
   // States for Checkout Form
+  // Check table/salon QR status on mount
+  const initialMesaData = useMemo(() => getInitialMesaState(), []);
+
+  // States for Checkout Form
   const [showCheckoutForm, setShowCheckoutForm] = useState(false);
   const [gettingLocation, setGettingLocation] = useState(false);
   const [copiedYape, setCopiedYape] = useState(false);
   const [checkoutData, setCheckoutData] = useState({
     nombre: '',
-    metodoEntrega: 'delivery', // 'delivery' | 'retiro'
+    metodoEntrega: initialMesaData.isQr ? 'salon' : 'delivery', // 'delivery' | 'retiro' | 'salon'
     direccion: '',
     coordenadasUrl: '',
     horaRecojo: '',
-    metodoPago: 'efectivo' // 'efectivo' | 'tarjeta' | 'yape_plin'
+    metodoPago: 'efectivo', // 'efectivo' | 'tarjeta' | 'yape_plin'
+    mesa: initialMesaData.mesa
   });
 
   useEffect(() => {
@@ -425,17 +460,24 @@ export default function App() {
     e.preventDefault();
     const total = calculateTotal();
     
-    let message = `*Hola ${RESTAURANTE_NAME}, deseo realizar un pedido:*\n\n`;
-    message += `👤 *Cliente:* ${checkoutData.nombre}\n`;
-    message += `🚚 *Método de entrega:* ${checkoutData.metodoEntrega === 'delivery' ? 'Envío a domicilio' : 'Retiro en tienda'}\n`;
-    
-    if (checkoutData.metodoEntrega === 'delivery') {
-      message += `🏠 *Dirección:* ${checkoutData.direccion}\n`;
-      if (checkoutData.coordenadasUrl) {
-        message += `🗺️ *Ubicación GPS:* ${checkoutData.coordenadasUrl}\n`;
-      }
+    let message = "";
+    if (checkoutData.metodoEntrega === 'salon') {
+      message = `*Hola ${RESTAURANTE_NAME}, deseo realizar un pedido desde la MESA ${checkoutData.mesa || 'de salón'}:*\n\n`;
+      message += `👤 *Cliente:* ${checkoutData.nombre}\n`;
+      message += `📍 *Consumo en local:* Mesa ${checkoutData.mesa || 'No indicada'}\n`;
     } else {
-      message += `⏰ *Hora estimada de recojo:* ${checkoutData.horaRecojo}\n`;
+      message = `*Hola ${RESTAURANTE_NAME}, deseo realizar un pedido para entrega:*\n\n`;
+      message += `👤 *Cliente:* ${checkoutData.nombre}\n`;
+      message += `🚚 *Método de entrega:* ${checkoutData.metodoEntrega === 'delivery' ? 'Envío a domicilio' : 'Retiro en tienda'}\n`;
+      
+      if (checkoutData.metodoEntrega === 'delivery') {
+        message += `🏠 *Dirección:* ${checkoutData.direccion}\n`;
+        if (checkoutData.coordenadasUrl) {
+          message += `🗺️ *Ubicación GPS:* ${checkoutData.coordenadasUrl}\n`;
+        }
+      } else {
+        message += `⏰ *Hora estimada de recojo:* ${checkoutData.horaRecojo}\n`;
+      }
     }
     
     const paymentLabels: Record<string, string> = {
@@ -735,9 +777,10 @@ export default function App() {
       <AnimatePresence>
         {cartCount > 0 && !showSummary && (
           <motion.div
-            initial={{ y: 100 }}
-            animate={{ y: 0 }}
-            exit={{ y: 100 }}
+            initial={{ y: 100, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            exit={{ y: 100, opacity: 0 }}
+            transition={springTransition}
             className="fixed bottom-0 w-full max-w-md p-5 z-40"
           >
             <div className="liquid-glass rounded-[2.2rem] p-4 flex items-center justify-between border border-white/60 shadow-2xl">
@@ -769,13 +812,15 @@ export default function App() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
+            transition={backdropTransition}
             className="fixed inset-0 z-[60] bg-black/60 backdrop-blur-sm flex items-end justify-center p-4 lg:p-0"
           >
             <motion.div
               initial={{ y: "100%" }}
               animate={{ y: 0 }}
               exit={{ y: "100%" }}
-              className="bg-white w-full max-w-md rounded-t-[3rem] p-6 max-h-[85vh] overflow-y-auto relative"
+              transition={springTransition}
+              className="bg-white w-full max-w-md rounded-t-[3rem] p-6 max-h-[85vh] overflow-y-auto relative shadow-2xl"
             >
               <div className="flex justify-between items-center mb-6">
                 <h2 className="font-title text-2xl text-primary">Mi Pedido</h2>
@@ -834,7 +879,7 @@ export default function App() {
                   setShowSummary(false);
                   setShowCheckoutForm(true);
                 }}
-                className="w-full bg-primary hover:opacity-95 text-white py-4 rounded-2xl flex items-center justify-center gap-3 shadow-lg shadow-primary/20 hover:scale-[1.01] transition-all font-bold cursor-pointer"
+                className="w-full bg-primary hover:opacity-95 text-white py-4 rounded-2xl flex items-center justify-center gap-3 shadow-lg shadow-primary/20 hover:scale-[1.01] transition-transform duration-300 ease-out font-bold cursor-pointer"
               >
                 Continuar con el Pedido
                 <ChevronRight size={20} />
@@ -850,6 +895,7 @@ export default function App() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
+            transition={backdropTransition}
             className="fixed inset-0 z-[100] bg-black/90 backdrop-blur-sm flex items-center justify-center p-4"
             onClick={() => setSelectedImage(null)}
           >
@@ -866,6 +912,7 @@ export default function App() {
               initial={{ scale: 0.8, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.8, opacity: 0 }}
+              transition={springTransition}
               src={selectedImage}
               alt="Plato ampliado"
               className="max-w-full max-h-[85vh] object-contain rounded-2xl shadow-2xl"
@@ -881,12 +928,14 @@ export default function App() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
+            transition={backdropTransition}
             className="fixed inset-0 z-[70] bg-black/45 backdrop-blur-md flex items-center justify-center p-4"
           >
             <motion.div
-              initial={{ scale: 0.9, y: 20 }}
-              animate={{ scale: 1, y: 0 }}
-              exit={{ scale: 0.9, y: 20 }}
+              initial={{ scale: 0.92, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.92, opacity: 0 }}
+              transition={springTransition}
               className="liquid-glass w-full max-w-sm rounded-[2.5rem] p-7 border border-white/50 shadow-2xl relative max-h-[90vh] overflow-y-auto"
             >
               <button
@@ -950,12 +999,14 @@ export default function App() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
+            transition={backdropTransition}
             className="fixed inset-0 z-[70] bg-black/45 backdrop-blur-md flex items-center justify-center p-4"
           >
             <motion.div
-              initial={{ scale: 0.9, y: 20 }}
-              animate={{ scale: 1, y: 0 }}
-              exit={{ scale: 0.9, y: 20 }}
+              initial={{ scale: 0.92, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.92, opacity: 0 }}
+              transition={springTransition}
               className="liquid-glass w-full max-w-sm rounded-[2.5rem] p-7 border border-white/50 shadow-2xl relative max-h-[90vh] overflow-y-auto"
             >
               <button
@@ -1037,12 +1088,14 @@ export default function App() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
+            transition={backdropTransition}
             className="fixed inset-0 z-[70] bg-black/45 backdrop-blur-md flex items-center justify-center p-4"
           >
             <motion.div
-              initial={{ scale: 0.9, y: 20 }}
-              animate={{ scale: 1, y: 0 }}
-              exit={{ scale: 0.9, y: 20 }}
+              initial={{ scale: 0.92, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.92, opacity: 0 }}
+              transition={springTransition}
               className="liquid-glass w-full max-w-sm rounded-[2.5rem] p-7 border border-white/50 shadow-2xl relative max-h-[90vh] overflow-y-auto"
             >
               <button
@@ -1055,7 +1108,7 @@ export default function App() {
 
               <div className="flex flex-col items-center text-center mb-5 mt-2">
                 <div className="w-12 h-12 bg-amber-500/10 border border-amber-500/20 backdrop-blur-sm rounded-full flex items-center justify-center mb-3">
-                  <ShoppingBag size={24} className="text-secondary" />
+                   <ShoppingBag size={24} className="text-secondary" />
                 </div>
                 <h2 className="font-title text-2xl text-dark leading-none mb-1">Finalizar Pedido</h2>
                 <p className="text-xs font-semibold text-[#2C1E16]/85">Completa los detalles de tu entrega y pago.</p>
@@ -1074,35 +1127,62 @@ export default function App() {
                   />
                 </div>
 
-                <div>
-                  <label className="text-[11px] font-bold text-[#6F4E37] uppercase ml-1 mb-1 block">Método de Entrega</label>
-                  <div className="grid grid-cols-2 gap-2 bg-white/30 backdrop-blur-sm p-1 rounded-xl border border-white/40">
-                    <button
-                      type="button"
-                      onClick={() => setCheckoutData({...checkoutData, metodoEntrega: 'delivery'})}
-                      className={`py-2 text-xs font-bold rounded-lg transition-all cursor-pointer ${
-                        checkoutData.metodoEntrega === 'delivery'
-                          ? 'bg-[#6F4E37] text-white shadow-sm'
-                          : 'text-[#2C1E16] hover:bg-white/20'
-                      }`}
-                    >
-                      Envío a domicilio
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setCheckoutData({...checkoutData, metodoEntrega: 'retiro'})}
-                      className={`py-2 text-xs font-bold rounded-lg transition-all cursor-pointer ${
-                        checkoutData.metodoEntrega === 'retiro'
-                          ? 'bg-[#6F4E37] text-white shadow-sm'
-                          : 'text-[#2C1E16] hover:bg-white/20'
-                      }`}
-                    >
-                      Retiro en tienda
-                    </button>
+                {initialMesaData.isQr ? (
+                  <div className="bg-[#6F4E37]/10 border border-[#6F4E37]/20 p-4 rounded-2xl mb-3">
+                    <p className="text-xs font-bold text-[#6F4E37] uppercase tracking-wider mb-2 flex items-center gap-1">
+                      <span>📍</span> Consumo en Salón
+                    </p>
+                    <div>
+                      <label className="text-[10px] font-bold text-[#6F4E37] uppercase ml-1 block mb-1">
+                        Número de Mesa
+                      </label>
+                      <input
+                        required
+                        type="text"
+                        value={checkoutData.mesa}
+                        onChange={e => {
+                          const val = e.target.value;
+                          setCheckoutData(prev => ({...prev, mesa: val}));
+                          try {
+                            sessionStorage.setItem('retablos_mesa', val || 'qr_generic');
+                          } catch (err) {}
+                        }}
+                        className="w-full liquid-glass-input rounded-xl px-4 py-2.5 text-sm focus:outline-none transition-all font-bold"
+                        placeholder="Ej. Mesa 4"
+                      />
+                    </div>
                   </div>
-                </div>
+                ) : (
+                  <div>
+                    <label className="text-[11px] font-bold text-[#6F4E37] uppercase ml-1 mb-1 block">Método de Entrega</label>
+                    <div className="grid grid-cols-2 gap-2 bg-white/30 backdrop-blur-sm p-1 rounded-xl border border-white/40">
+                      <button
+                        type="button"
+                        onClick={() => setCheckoutData({...checkoutData, metodoEntrega: 'delivery'})}
+                        className={`py-2 text-xs font-bold rounded-lg transition-all cursor-pointer ${
+                          checkoutData.metodoEntrega === 'delivery'
+                            ? 'bg-[#6F4E37] text-white shadow-sm'
+                            : 'text-[#2C1E16] hover:bg-white/20'
+                        }`}
+                      >
+                        Envío a domicilio
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setCheckoutData({...checkoutData, metodoEntrega: 'retiro'})}
+                        className={`py-2 text-xs font-bold rounded-lg transition-all cursor-pointer ${
+                          checkoutData.metodoEntrega === 'retiro'
+                            ? 'bg-[#6F4E37] text-white shadow-sm'
+                            : 'text-[#2C1E16] hover:bg-white/20'
+                        }`}
+                      >
+                        Retiro en tienda
+                      </button>
+                    </div>
+                  </div>
+                )}
 
-                {checkoutData.metodoEntrega === 'delivery' ? (
+                {!initialMesaData.isQr && checkoutData.metodoEntrega === 'delivery' && (
                   <div className="space-y-3">
                     <div>
                       <label className="text-[11px] font-bold text-[#6F4E37] uppercase ml-1">Dirección de Envío</label>
@@ -1139,8 +1219,16 @@ export default function App() {
                       </div>
                       <p className="text-[10px] font-medium text-[#2C1E16]/70 mt-1 ml-1">Permite precisar tu ubicación para el repartidor.</p>
                     </div>
+                    <div className="bg-amber-500/10 border border-amber-500/20 text-[#6F4E37] p-3.5 rounded-2xl text-[11px] font-semibold flex gap-2 items-start mt-1">
+                      <span className="text-sm shrink-0">⚠️</span>
+                      <p className="leading-tight text-gray-700">
+                        El precio del total no incluye el costo de envío (delivery). Este se coordinará por WhatsApp.
+                      </p>
+                    </div>
                   </div>
-                ) : (
+                )}
+
+                {!initialMesaData.isQr && checkoutData.metodoEntrega === 'retiro' && (
                   <div>
                     <label className="text-[11px] font-bold text-[#6F4E37] uppercase ml-1">Hora Estimada de Recojo</label>
                     <select
@@ -1196,6 +1284,18 @@ export default function App() {
                   </div>
                 </div>
 
+                {checkoutData.metodoPago === 'tarjeta' && (
+                  <div className="bg-[#6F4E37]/10 border border-[#6F4E37]/20 p-4 rounded-2xl text-xs font-bold space-y-1 animate-fade-in">
+                    <div className="flex items-center gap-2 text-[#6F4E37]">
+                      <span>💳</span>
+                      <span>Pago con Tarjeta</span>
+                    </div>
+                    <p className="font-semibold text-gray-700 leading-normal">
+                      El enlace de pago con tarjeta se te compartirá por WhatsApp en unos minutos.
+                    </p>
+                  </div>
+                )}
+
                 {checkoutData.metodoPago === 'yape_plin' && (
                   <div className="bg-[#2C1E16]/90 border border-white/10 backdrop-blur-sm p-4 rounded-2xl text-white shadow-lg space-y-2 animate-fade-in">
                     <div className="flex justify-between items-center">
@@ -1228,7 +1328,7 @@ export default function App() {
 
                 <button
                   type="submit"
-                  className="w-full bg-[#25D366]/90 border border-white/30 backdrop-blur-sm text-white py-3.5 rounded-xl font-bold text-sm shadow-md shadow-green-500/10 hover:bg-[#25D366] hover:scale-[1.01] transition-all flex items-center justify-center gap-2 cursor-pointer mt-3"
+                  className="w-full bg-[#25D366]/90 border border-white/30 backdrop-blur-sm text-white py-3.5 rounded-xl font-bold text-sm shadow-md shadow-green-500/10 hover:bg-[#25D366] hover:scale-[1.01] transition-transform duration-300 ease-out flex items-center justify-center gap-2 cursor-pointer mt-3"
                 >
                   <ShoppingBag size={18} />
                   Enviar Pedido a WhatsApp
@@ -1245,12 +1345,14 @@ export default function App() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
+            transition={backdropTransition}
             className="fixed inset-0 z-[80] bg-black/45 backdrop-blur-md flex items-center justify-center p-4"
           >
             <motion.div
-              initial={{ scale: 0.9, y: 20 }}
-              animate={{ scale: 1, y: 0 }}
-              exit={{ scale: 0.9, y: 20 }}
+              initial={{ scale: 0.92, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.92, opacity: 0 }}
+              transition={springTransition}
               className="liquid-glass w-full max-w-sm rounded-[2.5rem] p-7 border border-white/50 shadow-2xl relative max-h-[90vh] overflow-y-auto"
             >
               <button
